@@ -1,0 +1,20 @@
+:root { color-scheme: dark; --bg:#111; --card:#1b1b1b; --fg:#eee; --accent:#ffb000; --mut:#999; }
+* { box-sizing: border-box; }
+html, body { overscroll-behavior: none; } /* sem "puxar para atualizar" nem navegação por gesto de overscroll */
+body { margin:0; background:var(--bg); color:var(--fg); font:16px system-ui, sans-serif;
+  padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(16px, env(safe-area-inset-left)); }
+#app { max-width: 720px; margin: 0 auto; padding: 16px 0 48px; }
+/* margem lateral: mantém marcadores e sliders longe da borda, onde o Android reserva o gesto de voltar */
+#editor { padding: 0 24px; }
+h1 { font-size: 1.2rem; } h2 { font-size: 1rem; margin: 24px 0 8px; color: var(--accent); }
+.small { font-size: .8rem; color: var(--mut); margin: 6px 0; }
+.btn { touch-action:manipulation; display:inline-block; padding:12px 16px; background:#2a2a2a; color:var(--fg); border:0; border-radius:10px; font:inherit; cursor:pointer; min-height:44px; }
+.btn.primary { background:var(--accent); color:#000; font-weight:600; }
+.row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:8px 0; }
+.chk { display:flex; align-items:center; gap:6px; font-size:.9rem; }
+.chk input { width:20px; height:20px; }
+#wave { width:100%; height:180px; display:block; border-radius:10px; touch-action:none; background:#1a1a1a; }
+.field { margin:10px 0; } .field label { display:flex; justify-content:space-between; font-size:.9rem; margin-bottom:4px; }
+.field input[type=range] { width:100%; } .field select, .field input[type=text] { width:100%; padding:10px; font:inherit; background:#222; color:var(--fg); border:1px solid #333; border-radius:8px; }
+#peak.clip { color:#ff5a5a; }
+
