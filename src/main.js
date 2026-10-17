@@ -21,10 +21,11 @@ function getRendered() {
   return rendered;
 }
 function getBuffer() { getRendered(); if (!abuf) abuf = makeBuffer(rendered); return abuf; }
+const nf = (v, d = 1) => v.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
 function updatePeak() {
-  const p = peak(rendered.channels), el = $('peak');
-  el.textContent = `Pico: ${isFinite(linToDb(p)) ? linToDb(p).toFixed(1) : '−∞'} dBFS${p > 1 ? ' — CLIPPING (reduza o ganho)' : ''}`;
-  el.classList.toggle('clip', p > 1);
+  const p = peak(rendered.channels), db = linToDb(p), el = $('peak');
+  el.textContent = p > 1 ? `Clipping ${nf(db)} dBFS` : isFinite(db) ? `${nf(db)} dBFS` : '−∞ dBFS';
+  el.className = 'tag' + (p > 1 ? ' error' : db > -1 ? ' warn' : '');
 }
 
 // ---- waveform ----
@@ -57,7 +58,7 @@ $('zsel').onclick = () => wave.zoomSelection();
 function play() { if (state.audio) { preview.start(getBuffer(), { loop: $('loop').checked }); showLatency(); } }
 function showLatency() {
   const ms = latencyMs();
-  $('lat').textContent = ms == null ? '' : `Latência de saída estimada: ~${ms} ms (fones Bluetooth adicionam 100–250 ms)`;
+  $('lat').textContent = ms == null ? '' : `Latência de saída estimada: ~${ms} ms. Fones Bluetooth somam 100 a 250 ms.`;
 }
 $('play').addEventListener('pointerdown', (e) => { e.preventDefault(); play(); });
 $('play').addEventListener('click', (e) => { if (e.detail === 0) play(); }); // teclado/acessibilidade
@@ -77,7 +78,7 @@ function live() {
 const SLIDERS = [
   ['fi', 'fiv', 'fadeInMs', (v) => `${v} ms`, 0],
   ['fo', 'fov', 'fadeOutMs', (v) => `${v} ms`, 0],
-  ['gain', 'gv', 'gainDb', (v) => `${v.toFixed(1)} dB`, 0],
+  ['gain', 'gv', 'gainDb', (v) => `${nf(v)} dB`, 0],
 ];
 for (const [id, outId, key, fmt, def] of SLIDERS) {
   const el = $(id);
@@ -126,7 +127,7 @@ $('download').onclick = async () => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-    msg(`Gerado ${f.name} (${(f.size / 1024).toFixed(0)} KB).`);
+    msg(`Gerado ${f.name} (${Math.round(f.size / 1024).toLocaleString('pt-BR')} KB).`);
   } catch (e) { msg('Erro ao exportar: ' + e.message); }
 };
 
@@ -158,7 +159,7 @@ on((kind) => {
   dirty = true;
   if (kind !== 'audio') return;
   $('editor').hidden = false;
-  for (const [id, out, txt] of [['fi', 'fiv', '0 ms'], ['fo', 'fov', '0 ms'], ['gain', 'gv', '0.0 dB']]) { $(id).value = 0; $(out).textContent = txt; }
+  for (const [id, out, txt] of [['fi', 'fiv', '0 ms'], ['fo', 'fov', '0 ms'], ['gain', 'gv', '0,0 dB']]) { $(id).value = 0; $(out).textContent = txt; }
   $('norm').checked = false;
   $('fname').value = state.name.replace(/\.[^.]+$/, '');
   preview.stop();
@@ -172,8 +173,8 @@ $('file').addEventListener('change', async () => {
   try {
     const audio = await decodeFile(file, (t) => { info.textContent = t; });
     setAudio(audio, file.name);
-    const dur = (audio.channels[0].length / audio.sampleRate).toFixed(2);
-    info.textContent = `${file.name} — ${dur}s, ${audio.sampleRate} Hz, ${audio.channels.length} canal(is)`;
+    const dur = nf(audio.channels[0].length / audio.sampleRate, 2);
+    info.textContent = `${file.name} · ${dur} s · ${audio.sampleRate.toLocaleString('pt-BR')} Hz · ${audio.channels.length} canal(is)`;
   } catch (e) {
     info.textContent = `Falha ao decodificar ${file.name} [${file.type || '?'}]: ${e && (e.name + ' ' + e.message) || e}`;
     console.error(e);

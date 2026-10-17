@@ -40,6 +40,7 @@ export function createWaveform(canvas, { getPlayhead, snapEl, infoEl, onCommit }
   const sOf = (x) => view.offset + x * view.spp;
 
   function resize() {
+    pal = null;
     const dpr = window.devicePixelRatio || 1;
     W = canvas.clientWidth; H = canvas.clientHeight;
     canvas.width = W * dpr; canvas.height = H * dpr;
@@ -84,14 +85,23 @@ export function createWaveform(canvas, { getPlayhead, snapEl, infoEl, onCommit }
     return state.audio.channels[0][i];
   }
 
+  // Cores vêm dos tokens CSS (design.md) para a forma de onda seguir a identidade visual.
+  let pal = null;
+  const readPalette = () => {
+    const cs = getComputedStyle(document.documentElement), v = (n) => cs.getPropertyValue(n).trim();
+    pal = { bg: v('--papel-claro'), line: v('--grafite-18'), ink: v('--preto-grafite'), shade: v('--papel-sombra'),
+      start: v('--verde-baoba'), end: v('--terracota-queimada'), head: v('--azul-caixa-dagua'), flagText: v('--papel') };
+  };
+
   function draw() {
+    if (!pal) readPalette();
     g.clearRect(0, 0, W, H);
-    g.fillStyle = '#1a1a1a'; g.fillRect(0, 0, W, H);
+    g.fillStyle = pal.bg; g.fillRect(0, 0, W, H);
     if (!state.audio) return;
     const n = len(), mid = H / 2, amp = H / 2 - 4;
-    g.strokeStyle = '#333'; g.beginPath(); g.moveTo(0, mid); g.lineTo(W, mid); g.stroke();
+    g.strokeStyle = pal.line; g.lineWidth = 1; g.beginPath(); g.moveTo(0, mid + 0.5); g.lineTo(W, mid + 0.5); g.stroke();
 
-    g.strokeStyle = '#ffb000'; g.fillStyle = '#ffb000';
+    g.strokeStyle = pal.ink; g.fillStyle = pal.ink; g.lineWidth = 1;
     if (view.spp < 1) { // zoom extremo: polilinha amostra a amostra
       g.beginPath();
       const i0 = Math.max(0, Math.floor(view.offset) - 1), i1 = Math.min(n - 1, Math.ceil(view.offset + W * view.spp) + 1);
@@ -111,21 +121,26 @@ export function createWaveform(canvas, { getPlayhead, snapEl, infoEl, onCommit }
 
     const { start, end } = state.edit;
     const xs = xOf(start), xe = xOf(end);
-    g.fillStyle = 'rgba(0,0,0,0.6)';
+    // fora da seleção: papel mais escuro, por cima da onda (translúcido para a onda ainda aparecer)
+    g.globalAlpha = 0.72; g.fillStyle = pal.shade;
     g.fillRect(0, 0, Math.max(0, Math.min(W, xs)), H);
     g.fillRect(Math.max(0, Math.min(W, xe)), 0, W, H);
-    for (const [x, col] of [[xs, '#4cff8a'], [xe, '#ff5a5a']]) {
+    g.globalAlpha = 1;
+    // marcadores: filete de 2px + bandeira quadrada (raio 0), início aponta para dentro da seleção, fim também
+    for (const [x, col, dir] of [[xs, pal.start, 1], [xe, pal.end, -1]]) {
       if (x < -2 || x > W + 2) continue;
       g.fillStyle = col; g.fillRect(x - 1, 0, 2, H);
-      g.beginPath(); g.arc(x, 10, 8, 0, Math.PI * 2); g.fill();
+      g.fillRect(dir > 0 ? x : x - 18, 0, 18, 18);
+      g.strokeStyle = pal.ink; g.strokeRect((dir > 0 ? x : x - 18) + 0.5, 0.5, 17, 17);
     }
     const ph = getPlayhead && getPlayhead();
-    if (ph != null) { const x = xOf(ph); g.fillStyle = '#fff'; g.fillRect(x, 0, 1, H); }
+    if (ph != null) { const x = xOf(ph); g.fillStyle = pal.head; g.fillRect(x - 1, 0, 2, H); }
 
     if (infoEl) {
       const sr = state.audio.sampleRate;
-      const f = (s) => (s / sr).toFixed(4) + 's';
-      infoEl.textContent = `início ${f(start)} · fim ${f(end)} · duração ${f(end - start)} · ${view.spp.toFixed(view.spp < 10 ? 2 : 0)} amostras/px`;
+      const f = (s) => (s / sr).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' s';
+      const z = view.spp.toLocaleString('pt-BR', { maximumFractionDigits: view.spp < 10 ? 2 : 0 });
+      infoEl.innerHTML = `<span>Início <b>${f(start)}</b></span><span>Fim <b>${f(end)}</b></span><span>Duração <b>${f(end - start)}</b></span><span>Zoom <b>${z} amostras/px</b></span>`;
     }
   }
 

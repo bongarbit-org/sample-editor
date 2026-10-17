@@ -1,20 +1,107 @@
-:root { color-scheme: dark; --bg:#111; --card:#1b1b1b; --fg:#eee; --accent:#ffb000; --mut:#999; }
-* { box-sizing: border-box; }
-html, body { overscroll-behavior: none; } /* sem "puxar para atualizar" nem navegação por gesto de overscroll */
-body { margin:0; background:var(--bg); color:var(--fg); font:16px system-ui, sans-serif;
-  padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(16px, env(safe-area-inset-left)); }
-#app { max-width: 720px; margin: 0 auto; padding: 16px 0 48px; }
-/* margem lateral: mantém marcadores e sliders longe da borda, onde o Android reserva o gesto de voltar */
-#editor { padding: 0 24px; }
-h1 { font-size: 1.2rem; } h2 { font-size: 1rem; margin: 24px 0 8px; color: var(--accent); }
-.small { font-size: .8rem; color: var(--mut); margin: 6px 0; }
-.btn { touch-action:manipulation; display:inline-block; padding:12px 16px; background:#2a2a2a; color:var(--fg); border:0; border-radius:10px; font:inherit; cursor:pointer; min-height:44px; }
-.btn.primary { background:var(--accent); color:#000; font-weight:600; }
-.row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:8px 0; }
-.chk { display:flex; align-items:center; gap:6px; font-size:.9rem; }
-.chk input { width:20px; height:20px; }
-#wave { width:100%; height:180px; display:block; border-radius:10px; touch-action:none; background:#1a1a1a; }
-.field { margin:10px 0; } .field label { display:flex; justify-content:space-between; font-size:.9rem; margin-bottom:4px; }
-.field input[type=range] { width:100%; } .field select, .field input[type=text] { width:100%; padding:10px; font:inherit; background:#222; color:var(--fg); border:1px solid #333; border-radius:8px; }
-#peak.clip { color:#ff5a5a; }
+/* Identidade visual Bongarbit — ver design.md */
+@font-face { font-family: "The Mix Mono"; font-weight: 400; font-style: normal; font-display: swap; src: url("../assets/fonts/TheMixMono-5-Regular.otf") format("opentype"); }
+@font-face { font-family: "The Mix Mono"; font-weight: 600; font-style: normal; font-display: swap; src: url("../assets/fonts/TheMixMono-6-SemiBold.otf") format("opentype"); }
+@font-face { font-family: "The Mix Mono"; font-weight: 700; font-style: normal; font-display: swap; src: url("../assets/fonts/TheMixMono-7-Bold.otf") format("opentype"); }
 
+:root {
+  --preto-grafite: #161512; --verde-musgo: #1e2c1a; --marrom-terra: #6b3c23; --terracota-queimada: #b14826;
+  --ocre-cabaca: #d4752d; --amarelo-ocre: #d0962d; --verde-baoba: #31671f; --azul-caixa-dagua: #376182;
+  --areia: #d3ad84; --papel: #ead6bf; --papel-claro: #f4e8da; --papel-sombra: #dfc7ab;
+  --grafite-70: rgba(22,21,18,.7); --grafite-45: rgba(22,21,18,.45); --grafite-18: rgba(22,21,18,.18); --grafite-08: rgba(22,21,18,.08);
+
+  --surface-page: var(--papel); --surface-panel: var(--papel-claro); --surface-sunken: var(--papel-sombra);
+  --text-strong: var(--preto-grafite); --text-body: var(--grafite-70); --text-muted: var(--grafite-45);
+  --text-accent: var(--terracota-queimada);
+  --border-rule: var(--preto-grafite); --border-hairline: var(--grafite-18); --rule-thick: 3px;
+  --state-ok: var(--verde-baoba); --state-warn: var(--amarelo-ocre); --state-error: var(--terracota-queimada);
+  --action-primary: var(--terracota-queimada); --action-primary-hover: #993d20; --action-primary-active: #7f321a;
+  --focus-ring: var(--azul-caixa-dagua);
+
+  --font-core: "The Mix Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --fs-page-title: 30px; --fs-body: 15px; --fs-small: 13px; --fs-caption: 12px; --fs-micro: 11px;
+  --ls-eyebrow: .18em;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --content-max: 720px;
+  --shadow-print: 3px 3px 0 var(--grafite-18);
+  --ease-standard: cubic-bezier(.2,.6,.2,1); --dur-fast: 120ms;
+}
+
+* { box-sizing: border-box; border-radius: 0; }
+html, body { overscroll-behavior: none; } /* sem "puxar para atualizar" nem navegação por gesto de overscroll */
+body {
+  margin: 0; background: var(--surface-page); color: var(--text-strong);
+  font-family: var(--font-core); font-size: var(--fs-body); line-height: 1.5; letter-spacing: .01em;
+  padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(16px, env(safe-area-inset-left));
+}
+::selection { background: var(--amarelo-ocre); color: var(--preto-grafite); }
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+#app { max-width: var(--content-max); margin: 0 auto; padding: var(--space-5) 0 var(--space-6); display: flex; flex-direction: column; gap: var(--space-5); }
+#editor { display: flex; flex-direction: column; gap: var(--space-5); padding: 0 var(--space-5); } /* margem: longe da borda (gesto de voltar) */
+#editor[hidden] { display: none; }
+
+/* rótulos em caixa alta */
+.eyebrow, .panel-title, .field label, .tag { font-size: var(--fs-micro); font-weight: 600; letter-spacing: var(--ls-eyebrow); text-transform: uppercase; }
+.eyebrow { color: var(--text-accent); }
+
+.screen-head { border-bottom: var(--rule-thick) solid var(--border-rule); padding-bottom: var(--space-3); }
+.screen-head h1 { margin: var(--space-1) 0 0; font-size: var(--fs-page-title); font-weight: 700; line-height: 1.2; }
+
+.panel { background: var(--surface-panel); border: 1px solid var(--border-rule); box-shadow: var(--shadow-print); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.panel-title { margin: 0; padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-hairline); color: var(--text-strong); }
+.note { margin: 0; font-size: var(--fs-caption); color: var(--text-muted); line-height: 1.35; }
+#info { color: var(--text-body); font-size: var(--fs-small); overflow-wrap: anywhere; }
+.readout { margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font-size: var(--fs-caption); color: var(--text-body); }
+.readout b { color: var(--text-strong); font-weight: 600; }
+.row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+
+/* botão */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); font: inherit; font-size: var(--fs-micro);
+  font-weight: 600; letter-spacing: var(--ls-eyebrow); text-transform: uppercase; padding: 10px 16px; min-height: 44px;
+  border: 1px solid var(--border-rule); background: var(--papel-claro); color: var(--text-strong); box-shadow: var(--shadow-print);
+  cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  transition: background var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+}
+.btn:hover { background: var(--papel-sombra); }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--grafite-18); }
+.btn.primary { background: var(--action-primary); color: var(--papel); }
+.btn.primary:hover { background: var(--action-primary-hover); }
+.btn.primary:active { background: var(--action-primary-active); }
+.btn[hidden] { display: none; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* campos */
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.field label { display: flex; justify-content: space-between; align-items: baseline; color: var(--text-strong); }
+.field output { font-weight: 400; letter-spacing: .01em; text-transform: none; font-size: var(--fs-small); color: var(--text-body); }
+.field select, .field input[type=text] {
+  width: 100%; padding: 11px 13px; font: inherit; font-size: var(--fs-body); color: var(--text-strong);
+  background: var(--papel-sombra); border: 1px solid var(--border-rule); border-radius: 0; appearance: none; -webkit-appearance: none;
+}
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M0 0h12L6 8z' fill='%23161512'/%3E%3C/svg%3E");
+  background-position: right 13px center; background-repeat: no-repeat; padding-right: 36px;
+}
+
+/* checkbox com × de tinta */
+.chk { display: flex; align-items: center; gap: var(--space-3); font-size: var(--fs-small); cursor: pointer; }
+.chk input { appearance: none; -webkit-appearance: none; margin: 0; flex: none; width: 22px; height: 22px; border: 1px solid var(--border-rule); background: var(--papel-sombra); display: grid; place-items: center; cursor: pointer; }
+.chk input:checked::after { content: "×"; font-size: 22px; line-height: 1; font-weight: 700; color: var(--preto-grafite); }
+
+/* slider: trilho reto com filete, cursor quadrado de tinta */
+input[type=range] { appearance: none; -webkit-appearance: none; width: 100%; height: 30px; margin: 0; background: transparent; touch-action: pan-y; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 14px; background: var(--papel-sombra); border: 1px solid var(--border-rule); }
+input[type=range]::-moz-range-track { height: 12px; background: var(--papel-sombra); border: 1px solid var(--border-rule); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 30px; margin-top: -9px; background: var(--preto-grafite); border: 0; border-radius: 0; }
+input[type=range]::-moz-range-thumb { width: 22px; height: 30px; background: var(--preto-grafite); border: 0; border-radius: 0; }
+
+/* etiqueta de estado */
+.tag { display: inline-block; padding: 3px 9px; border: 1px solid var(--border-rule); background: var(--state-ok); color: var(--papel); }
+.tag.warn { background: var(--state-warn); color: var(--preto-grafite); }
+.tag.error { background: var(--state-error); color: var(--papel); }
+.tag:empty { display: none; }
+.meter { gap: var(--space-3); }
+
+/* forma de onda: papel claro, filete de tinta */
+#wave { width: 100%; height: 180px; display: block; border: 1px solid var(--border-rule); background: var(--papel-claro); touch-action: none; }

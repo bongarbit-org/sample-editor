@@ -1,20 +1,18 @@
-# design.md — Plataforma de tese
+# design.md — Identidade visual Bongarbit
 
-Guia para construir a **plataforma de acompanhamento da escrita da tese de doutorado**, usando a linguagem visual do Bongarbit. Cole este arquivo na raiz do projeto e o agente segue estas regras.
+Guia da linguagem visual do **Bongarbit** para interfaces digitais. Cole este arquivo na raiz do projeto e siga estas regras.
 
 ---
 
-## O que é isto
+## A linguagem
 
-Uma ferramenta pessoal de trabalho, usada todo dia por **uma pessoa**: status do sumário, reuniões de orientação, ideias soltas, acompanhamento dos arquivos no Drive. Não é site institucional, não é peça de divulgação, não tem visitante.
+**Impresso.** Papel envelhecido, tinta preta, cantos retos, filete, sombra sólida. A referência mental é o **caderno de campo e a ficha de arquivo** — não o cartaz, não o app de startup.
 
-Isso muda três coisas em relação ao uso da marca em peças públicas:
+Três princípios:
 
-1. **Sem assinatura institucional.** Nada de chamada do Ministério da Cultura, régua de patrocinadores ou PRONAC — nada disso pertence aqui.
-2. **Sem retórica de marca.** O texto é operacional e em primeira pessoa. Não se escreve "Bongarbit nasce da convicção de que…" numa tela de acompanhamento.
-3. **Densidade acima de impacto.** Uma peça impressa respira; uma ferramenta de trabalho mostra muita informação de uma vez. A escala tipográfica aqui é menor e o espaçamento mais apertado.
-
-O que permanece: **a linguagem visual de impresso.** Papel envelhecido, tinta preta, cantos retos, filete, sombra sólida. A referência mental é o **caderno de campo e a ficha de arquivo** — não o cartaz.
+1. **Papel sobre papel.** Superfícies são folhas empilhadas. A profundidade vem de sombra sólida deslocada, nunca de blur.
+2. **Tinta, não pixel.** Contornos são filetes de tinta (1px fino, 3px grosso). Cor é pigmento: terrosa, chapada, sem gradiente.
+3. **Texto operacional.** Frases curtas, diretas, sem retórica de marca.
 
 ---
 
@@ -48,9 +46,9 @@ O que permanece: **a linguagem visual de impresso.** Papel envelhecido, tinta pr
 
   /* Semântica — superfícies */
   --surface-page:var(--papel);
-  --surface-panel:var(--papel-claro);   /* sidebar, painéis */
+  --surface-panel:var(--papel-claro);
   --surface-card:var(--papel-claro);
-  --surface-sunken:var(--papel-sombra); /* campos, linhas alternadas */
+  --surface-sunken:var(--papel-sombra); /* campos, trilhos, linhas alternadas */
   --surface-inverse:var(--preto-grafite);
 
   /* Semântica — texto */
@@ -69,14 +67,13 @@ O que permanece: **a linguagem visual de impresso.** Papel envelhecido, tinta pr
   --rule-hair:1px;
   --rule-thick:3px;
 
-  /* Estado do trabalho — a semântica central desta plataforma */
-  --status-nao-comecado:var(--grafite-45);
-  --status-em-andamento:var(--amarelo-ocre);
-  --status-rascunho:var(--ocre-cabaca);
-  --status-em-revisao:var(--azul-caixa-dagua);
-  --status-com-orientador:var(--marrom-terra);
-  --status-fechado:var(--verde-baoba);
-  --status-travado:var(--terracota-queimada);
+  /* Estados — só cores da paleta */
+  --state-neutral:var(--grafite-45);
+  --state-info:var(--azul-caixa-dagua);
+  --state-ok:var(--verde-baoba);
+  --state-warn:var(--amarelo-ocre);
+  --state-alert:var(--ocre-cabaca);
+  --state-error:var(--terracota-queimada);
 
   /* Ação */
   --action-primary:var(--terracota-queimada);
@@ -84,29 +81,27 @@ O que permanece: **a linguagem visual de impresso.** Papel envelhecido, tinta pr
   --action-primary-active:#7f321a;
   --focus-ring:var(--azul-caixa-dagua);
 
-  /* Tipografia — escala de aplicação, mais densa que a de peça */
+  /* Tipografia */
   --font-core:"The Mix Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --font-leitura:"Source Serif 4", Charter, "Iowan Old Style", Georgia, serif;
   --fw-light:300; --fw-regular:400; --fw-semibold:600; --fw-bold:700; --fw-black:900;
-  --fs-page-title:30px;   /* título da tela */
-  --fs-h2:22px;           /* título de seção */
-  --fs-h3:17px;           /* título de capítulo/card */
+  --fs-display:44px;      /* peça de impacto */
+  --fs-page-title:30px;   /* título de tela */
+  --fs-h2:22px;
+  --fs-h3:17px;
   --fs-body:15px;
   --fs-small:13px;
   --fs-caption:12px;
-  --fs-micro:11px;        /* rótulos, status, metadados */
+  --fs-micro:11px;        /* rótulos, estados, metadados */
   --lh-heading:1.2;
   --lh-body:1.5;
-  --lh-dense:1.35;        /* tabelas e listas */
+  --lh-dense:1.35;
   --ls-body:0.01em;
-  --ls-eyebrow:0.18em;    /* rótulos e status */
+  --ls-eyebrow:0.18em;    /* rótulos em caixa alta */
 
   /* Espaço — base 8 com meio-passo */
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px;
   --space-6:32px; --space-7:48px; --space-8:64px;
-  --sidebar-w:252px;
-  --content-max:1080px;
-  --reading-max:680px;    /* notas e texto longo */
+  --content-max:720px;
   --gutter:clamp(16px,3vw,40px);
 
   /* Forma */
@@ -135,28 +130,39 @@ a:hover{color:var(--text-link-hover)}
 :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
 ```
 
-### Tipografia
+### Cores — papéis
 
-**The Mix Mono** em tudo. Numa plataforma de escrita acadêmica a monoespaçada trabalha a favor: alinha numeração de capítulo, contagem de palavras, datas e percentuais em colunas sem tabular-nums.
+| Papel | Token |
+|---|---|
+| Fundo da página | `--papel` |
+| Painéis, cartões | `--papel-claro` |
+| Campos, trilhos, áreas rebaixadas | `--papel-sombra` |
+| Tinta, contornos, texto forte | `--preto-grafite` |
+| Ação principal, destaque | `--terracota-queimada` |
+| Foco | `--azul-caixa-dagua` |
+| Selecionado / invertido | fundo `--preto-grafite`, texto `--papel` |
 
-Os OTF estão em `assets/fonts/` (Light 300, SemiLight 350, Regular 400 + itálico, SemiBold 600, Bold 700, Black 900). Declare `@font-face` para os pesos usados. Sem os arquivos, cai na stack monoespaçada do sistema — nunca substitua por Inter, Roboto ou sans genérica.
+Sobre Amarelo Ocre e Areia o texto vai em `--preto-grafite`; nos demais fundos coloridos, em `--papel`.
 
-**Leitura de texto longo.** Trechos da própria tese, quando exibidos para leitura, vão numa **serifada de leitura** — monoespaçada é ótima para interface e cansativa para três parágrafos de argumentação. Toda a moldura da interface (navegação, rótulos, tabelas, estados, metadados) permanece em The Mix Mono; a serifada entra **só no corpo do texto da tese**, em `--reading-max`.
+---
+
+## Tipografia
+
+**The Mix Mono** em tudo. A monoespaçada alinha números, durações e percentuais em colunas sem `tabular-nums`, e dá o ar de máquina de escrever / ficha datilografada.
+
+Os OTF (Light 300, SemiLight 350, Regular 400 + itálico, SemiBold 600, Bold 700, Black 900) ficam em `assets/fonts/`. Declare `@font-face` só para os pesos usados:
 
 ```css
-.texto-tese{
-  font-family:var(--font-leitura);
-  font-size:18px;
-  line-height:1.66;
-  letter-spacing:0;
-  max-width:var(--reading-max);
-  color:var(--text-strong);
-  text-wrap:pretty;
-}
-.texto-tese p+p{margin-top:.9em}
+@font-face{font-family:"The Mix Mono";font-weight:400;font-style:normal;font-display:swap;src:url("../assets/fonts/TheMixMono-5-Regular.otf") format("opentype")}
+@font-face{font-family:"The Mix Mono";font-weight:600;font-style:normal;font-display:swap;src:url("../assets/fonts/TheMixMono-6-SemiBold.otf") format("opentype")}
+@font-face{font-family:"The Mix Mono";font-weight:700;font-style:normal;font-display:swap;src:url("../assets/fonts/TheMixMono-7-Bold.otf") format("opentype")}
 ```
 
-Source Serif 4 tem cor de tinta próxima à da The Mix Mono e boa performance em tela — as duas convivem sem uma parecer intrusa. Uma só serifada no projeto inteiro.
+Sem os arquivos, cai na stack monoespaçada do sistema — **nunca** substitua por Inter, Roboto ou outra sans genérica.
+
+- **Rótulos** (olho, estado, botão): caixa alta, `--fs-micro`, semibold, `--ls-eyebrow`.
+- **Títulos**: bold, `--lh-heading`, sem caixa alta.
+- **Corpo**: regular, `--fs-body`; texto auxiliar em `--text-body` ou `--text-muted`.
 
 ---
 
@@ -165,180 +171,104 @@ Source Serif 4 tem cor de tinta próxima à da The Mix Mono e boa performance em
 1. **Raio 0 em tudo.** Única exceção: o radio button.
 2. **Sombra sólida deslocada, nunca blur.** É papel sobre papel.
 3. **O fundo é Papel `#ead6bf`, nunca branco puro.**
-4. **Sem emoji.** Inclusive em status — o estado é cor + palavra, não bolinha colorida com carinha.
-5. **Não invente cores.** Os sete estados de trabalho já cobrem o vocabulário.
+4. **Sem emoji.** O estado é cor + palavra.
+5. **Não invente cores.** Tudo sai da paleta acima.
 6. **Sem gradiente, sem blur, sem glassmorphism, sem `backdrop-filter`.**
-7. **Nada de assinatura institucional.** Sem MinC, sem régua de patrocinadores, sem PRONAC.
-8. **Sem logo.** Esta é uma plataforma pessoal de tese, não peça do projeto Bongarbit — nenhuma marca aparece em tela alguma. O que se herda daqui é a linguagem visual, não a assinatura.
-9. **Ilustração é raríssima aqui.** No máximo uma xilogravura pequena num estado vazio. Uma ferramenta diária não carrega baobá em cada tela.
-
----
-
-## Estados do trabalho
-
-O vocabulário central da plataforma. Sete estados, cada um com cor fixa da paleta:
-
-| Estado | Cor | Quando |
-|---|---|---|
-| Não começado | `--grafite-45` | existe no sumário, não tem uma linha |
-| Em andamento | `--amarelo-ocre` | escrevendo agora |
-| Rascunho | `--ocre-cabaca` | tem texto inteiro, ruim mas inteiro |
-| Em revisão | `--azul-caixa-dagua` | reescrevendo |
-| Com orientador | `--marrom-terra` | esperando devolutiva |
-| Fechado | `--verde-baoba` | não mexo mais sem motivo forte |
-| Travado | `--terracota-queimada` | parado por bloqueio, não por prioridade |
-
-**Travado é diferente de não começado.** A distinção é o valor da ferramenta: mostra onde está o problema real.
-
-### Etiqueta de estado
-
-Retângulo reto, caixa alta, 11px, tracking 0.18em, filete de 1px em tinta, fundo na cor do estado.
-
-```jsx
-<span style={{
-  display:"inline-block", padding:"3px 9px",
-  fontSize:"var(--fs-micro)", fontWeight:"var(--fw-semibold)",
-  letterSpacing:"var(--ls-eyebrow)", textTransform:"uppercase",
-  border:"1px solid var(--border-rule)", borderRadius:0,
-  background:"var(--status-rascunho)", color:"var(--papel)"
-}}>Rascunho</span>
-```
-
-Sobre Amarelo Ocre e Areia o texto vai em `--preto-grafite`; nos demais, em `--papel`.
+7. **Ilustração é rara.** Xilogravura pequena em estado vazio, no máximo uma por tela.
+8. **Uso da marca em ferramentas:** sem assinatura institucional, sem régua de patrocinadores, sem retórica de marca. Herda-se a linguagem visual, não a assinatura.
 
 ---
 
 ## Componentes
 
-### Sidebar
-Coluna fixa de 252px em Papel Claro, separada por filete de 1px em tinta. Itens em caixa alta 11px com tracking; o ativo recebe **filete grosso de 3px em Terracota na borda esquerda** e texto em tinta cheia — o mesmo gesto do underline das abas, virado na vertical.
+### Cabeçalho de tela
+Olho em caixa alta (rótulo) + título + ação à direita, sobre **filete grosso de 3px** em tinta. Sem hero, sem imagem de topo.
 
-```jsx
-<nav style={{width:"var(--sidebar-w)",background:"var(--surface-panel)",borderRight:"1px solid var(--border-rule)",height:"100vh",position:"sticky",top:0,display:"flex",flexDirection:"column",gap:"var(--space-1)",padding:"var(--space-5) 0"}}>
-  <a href="#" style={{padding:"9px var(--space-5)",borderLeft:"var(--rule-thick) solid var(--terracota-queimada)",fontSize:"var(--fs-micro)",fontWeight:"var(--fw-semibold)",letterSpacing:"var(--ls-eyebrow)",textTransform:"uppercase",color:"var(--text-strong)",textDecoration:"none"}}>Sumário</a>
-  <a href="#" style={{padding:"9px var(--space-5)",borderLeft:"var(--rule-thick) solid transparent",fontSize:"var(--fs-micro)",fontWeight:"var(--fw-semibold)",letterSpacing:"var(--ls-eyebrow)",textTransform:"uppercase",color:"var(--text-muted)",textDecoration:"none"}}>Orientação</a>
-</nav>
-```
-
-### Linha do sumário
-O componente mais importante. Cada capítulo/seção é uma **linha de ficha**, não um card: numeração monoespaçada, título, etiqueta de estado, contagem de palavras, data do último toque. Separadas por filete hairline; nível de indentação por `padding-left`.
-
-```jsx
-<div style={{display:"grid",gridTemplateColumns:"56px 1fr 110px 90px 92px",gap:"var(--space-4)",alignItems:"center",padding:"11px var(--space-4)",borderBottom:"1px solid var(--border-hairline)",lineHeight:"var(--lh-dense)"}}>
-  <span style={{fontSize:"var(--fs-small)",color:"var(--text-muted)"}}>3.2</span>
-  <span style={{fontSize:"var(--fs-body)"}}>Instrumentos digitais e fundamento cultural</span>
-  <StatusTag estado="Em revisão" />
-  <span style={{fontSize:"var(--fs-small)",color:"var(--text-body)",textAlign:"right"}}>4.210</span>
-  <span style={{fontSize:"var(--fs-caption)",color:"var(--text-muted)",textAlign:"right"}}>12/09</span>
-</div>
-```
-
-Hover: fundo `--grafite-08`. Nada de sombra, nada de elevação.
-
-### Barra de progresso
-Retângulo reto com filete em tinta, preenchido na cor do estado. Sem cantos arredondados, sem animação de brilho.
-
-```jsx
-<div style={{height:14,border:"1px solid var(--border-rule)",background:"var(--papel-sombra)"}}>
-  <div style={{height:"100%",width:"62%",background:"var(--verde-baoba)"}} />
-</div>
-```
-
-Para progresso composto (quanto de cada estado no total), use uma **faixa segmentada** — blocos lado a lado nas cores dos estados, separados por filete de 1px. Lê-se como régua de impressor.
-
-### Nota de orientação
-Ficha de reunião. Data em caixa alta como olho, participantes, encaminhamentos. Filete grosso no topo em Marrom Terra — a cor de "com orientador".
-
-```jsx
-<article style={{background:"var(--surface-card)",border:"1px solid var(--border-rule)",borderTop:"var(--rule-thick) solid var(--marrom-terra)",boxShadow:"var(--shadow-print)",padding:"var(--space-5)"}}>
-  <div style={{fontSize:"var(--fs-micro)",fontWeight:"var(--fw-semibold)",letterSpacing:"var(--ls-eyebrow)",textTransform:"uppercase",color:"var(--text-accent)"}}>Orientação · 12/09/2026</div>
-  <h3 style={{fontSize:"var(--fs-h3)",fontWeight:"var(--fw-bold)",margin:"var(--space-2) 0 0"}}>Recorte do capítulo 3</h3>
-  <div style={{fontSize:"var(--fs-small)",color:"var(--text-body)",marginTop:"var(--space-3)",maxWidth:"var(--reading-max)"}}>…</div>
-</article>
-```
-
-Encaminhamentos viram checklist com o **×** de tinta do checkbox — marcação de formulário preenchido à mão.
-
-### Ideia solta
-Captura rápida, sem estrutura. Bloco pequeno em Papel Claro com filete hairline e sombra impressa leve, data em micro no rodapé. Grade tipo mural (`repeat(auto-fill,minmax(240px,1fr))`) — o único lugar da plataforma onde o layout é solto de propósito.
-
-Uma ideia pode ser **promovida** a seção do sumário: mostre isso como ação secundária no hover, nunca como botão sempre visível.
-
-### Item do Drive
-Linha com nome do arquivo, quem tocou por último, data e estado de sincronia. Arquivo desatualizado em relação à seção correspondente: etiqueta **Travado** ou um filete Terracota à esquerda. Sem ícone de nuvem — use o texto.
+### Painel / ficha
+Fundo `--papel-claro`, filete de 1px em tinta, sombra `--shadow-print`, `padding: var(--space-4)`. Título em rótulo (caixa alta micro). Painéis ficam separados por `--space-5`.
 
 ### Botão
-Caixa alta, tracking 0.18em, cantos retos, filete de 1px, sombra impressa de 3px. Em ferramenta de uso diário o tamanho padrão é o `sm`; reserve `md` para a ação principal da tela.
+Caixa alta, tracking 0.18em, cantos retos, filete de 1px, sombra impressa de 3px. Altura mínima de 44px em toque.
 
-```jsx
-<button style={{display:"inline-flex",alignItems:"center",gap:"var(--space-2)",font:"inherit",fontSize:"var(--fs-micro)",fontWeight:"var(--fw-semibold)",letterSpacing:"var(--ls-eyebrow)",textTransform:"uppercase",padding:"8px 14px",border:"1px solid var(--border-rule)",borderRadius:0,background:"var(--action-primary)",color:"var(--papel)",boxShadow:"var(--shadow-print)",cursor:"pointer"}}>Nova entrada</button>
+```css
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);font:inherit;font-size:var(--fs-micro);font-weight:var(--fw-semibold);letter-spacing:var(--ls-eyebrow);text-transform:uppercase;padding:10px 16px;min-height:44px;border:1px solid var(--border-rule);border-radius:0;background:var(--papel-claro);color:var(--text-strong);box-shadow:var(--shadow-print);cursor:pointer;touch-action:manipulation;transition:background var(--dur-fast) var(--ease-standard),transform var(--dur-fast) var(--ease-standard),box-shadow var(--dur-fast) var(--ease-standard)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--grafite-18)}
+.btn.primary{background:var(--action-primary);color:var(--papel)}
+.btn.primary:hover{background:var(--action-primary-hover)}
+.btn.primary:active{background:var(--action-primary-active)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
 ```
 
-Variantes: **primary** (Terracota) · **secondary** (Papel Claro / tinta) · **ghost** (transparente).
+Variantes: **primary** (Terracota) · **secondary** (Papel Claro / tinta) · **ghost** (transparente, sem sombra).
 
 ### Campos
-Fundo Papel Claro, filete de 1px em tinta, `padding:11px 13px`, cantos retos. Label em caixa alta 11px acima. O checkbox marca com **×** de tinta. O radio é o único elemento redondo do sistema.
+Fundo `--papel-sombra`, filete de 1px em tinta, `padding:11px 13px`, cantos retos. Rótulo em caixa alta micro acima.
+
+- **Checkbox:** quadrado de 20px com filete de tinta; marcado, mostra um **×** de tinta (marcação de formulário preenchido à mão).
+- **Radio:** único elemento redondo do sistema.
+- **Slider:** trilho reto de 14px em `--papel-sombra` com filete de tinta; cursor quadrado de tinta cheia (`--preto-grafite`), 22×30px.
+- **Select:** mesmo tratamento dos campos de texto.
+
+### Etiqueta de estado
+Retângulo reto, caixa alta, 11px, tracking 0.18em, filete de 1px em tinta, fundo na cor do estado (`--state-*`).
+
+```css
+.tag{display:inline-block;padding:3px 9px;font-size:var(--fs-micro);font-weight:var(--fw-semibold);letter-spacing:var(--ls-eyebrow);text-transform:uppercase;border:1px solid var(--border-rule);border-radius:0;background:var(--state-ok);color:var(--papel)}
+.tag.warn{background:var(--state-warn);color:var(--preto-grafite)}
+```
+
+### Barra de progresso / medidor
+Retângulo reto com filete em tinta, trilho `--papel-sombra`, preenchido na cor do estado. Sem cantos arredondados, sem animação de brilho. Valores compostos usam faixa segmentada, blocos lado a lado separados por filete de 1px.
+
+### Linha de ficha (listas e tabelas)
+Não é card: linha com filete hairline embaixo, numeração mono à esquerda, hover com fundo `--grafite-08`. Alternância de fundo só em listas longas, com `--papel-sombra`.
 
 ### Estado vazio
-O lugar da ilustração. Uma xilogravura pequena (máx. 180px) de `assets/illustrations/`, texto curto em `--text-muted` e uma ação. Um por tela, nunca mais.
+Frase única em `--text-muted`, uma ação. Uma xilogravura pequena (máx. 180px) é opcional.
 
 ---
 
 ## Layout
 
-- **Sidebar fixa + coluna de conteúdo** com `max-width: 1080px`. Texto longo em `--reading-max: 680px`.
-- Densidade de ferramenta: linhas de tabela em ~40px, seções separadas por `--space-6`, não `--space-9`.
+- Coluna única com `max-width: var(--content-max)` no celular; sidebar fixa de 252px em Papel Claro só quando houver navegação em telas largas.
 - Sempre **flex/grid com `gap`**.
-- **Cabeçalho de tela** = olho em caixa alta + título + ação à direita, sobre filete grosso. Sem hero, sem imagem de topo.
-- Tabelas e listas ganham filete hairline entre linhas; alternância de fundo só se passarem de ~15 linhas, usando `--papel-sombra`.
+- Seções separadas por `--space-5`/`--space-6`; densidade de ferramenta, sem hero.
+- Margem lateral mínima de `--gutter`; controles de arrasto longe da borda da tela (gesto de voltar do sistema).
 
 ## Estados de interação
 
 - **Hover:** fundo `--grafite-08` em linhas; nos botões, escurece o pigmento (`#b14826` → `#993d20`).
 - **Press:** `translate(2px,2px)` — o elemento entra na própria sombra. O gesto de carimbar.
-- **Focus:** contorno 2px Azul Caixas d'Água, offset 2px. Numa ferramenta usada por teclado, isto importa mais que em site.
+- **Focus:** contorno 2px Azul Caixa d'Água, offset 2px.
 - **Disabled:** opacidade 0.4, `cursor:not-allowed`.
 - **Selecionado:** inverte para tinta cheia (fundo Preto Grafite, texto Papel).
 
 ## Animação
 
-Discreta e mecânica: `cubic-bezier(.2,.6,.2,1)`, 120–200ms. Só cor, posição curta e toggle. **Sem bounce, sem parallax, sem fade-in de scroll, sem confete ao concluir capítulo.** Marcar uma seção como fechada muda a cor da etiqueta — só isso, e é suficiente.
+Discreta e mecânica: `cubic-bezier(.2,.6,.2,1)`, 120–200ms. Só cor, posição curta e toggle. **Sem bounce, sem parallax, sem fade-in de scroll, sem confete.**
 
 ## Iconografia
 
-**Lucide** via CDN, traço 1.5–2px, `currentColor`. Só onde o texto não resolve: navegação, expandir/colapsar, link externo do Drive. Emoji nunca. Unicode só no `×` do checkbox e no `×` de fechar.
+**Lucide**, traço 1.5–2px, `currentColor`, só onde o texto não resolve. Emoji nunca. Unicode só no **×** do checkbox e no **×** de fechar.
 
 ---
 
 ## Voz
 
-Esta é uma ferramenta que **você** usa. O texto é operacional, em primeira pessoa quando houver pessoa, direto sempre.
-
-- **Rótulos:** substantivo curto em caixa alta — SUMÁRIO, ORIENTAÇÃO, IDEIAS, ARQUIVOS.
-- **Estados vazios:** frase única, sem entusiasmo fabricado. "Nenhuma ideia registrada ainda." Não "Comece sua jornada de escrita!".
-- **Datas:** pt-BR, `12/09`. Relativas só quando recentes ("há 3 dias"), absolutas depois disso.
-- **Números:** vírgula decimal, separador de milhar com ponto (`4.210 palavras`).
-- **Sem gamificação.** Nenhum streak, nenhuma medalha, nenhum "parabéns". A recompensa é a barra mudar de cor.
-- **Sem retórica de marca.** O vocabulário poético do Bongarbit (raiz, terreiro, ancestralidade) pertence às peças públicas do projeto, não a esta plataforma. Aqui a linguagem é a do trabalho: seção, devolutiva, recorte, versão, prazo.
+- **Rótulos:** substantivo curto em caixa alta — ARQUIVO, EDIÇÃO, EXPORTAR.
+- **Mensagens:** frase única, operacional, sem entusiasmo fabricado.
+- **Datas:** pt-BR, `12/09`.
+- **Números:** vírgula decimal, ponto como separador de milhar (`4.210`).
+- **Sem gamificação.** Nenhum streak, medalha ou "parabéns".
 
 ---
 
-## Assets a copiar
-
-Do kit, apenas o que a aplicação carrega:
+## Assets
 
 ```
-assets/fonts/                            The Mix Mono, 7 pesos — essencial
-assets/backgrounds/paper-texture.png     textura de papel, se quiser fundo texturizado
-assets/illustrations/                    só para estados vazios — use 1 ou 2, não a pasta toda
+assets/fonts/                            The Mix Mono, 7 pesos
+assets/backgrounds/paper-texture.png     textura de papel, opcional
+assets/illustrations/                    só para estados vazios
 ```
 
-A serifada de leitura vem do Google Fonts:
-
-```html
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
-```
-
-**Não copie** para este projeto: logo alguma, réguas de apoio, logos do Fab Lab Rec, submarcas (Café com Bongarbit, Circula), templates de certificado e timbrado. Nada disso pertence a uma plataforma pessoal de tese.
+Não copie para interfaces de ferramenta: logos, réguas de apoio, submarcas e templates de certificado ou timbrado.

@@ -3,56 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Sample Editor</title>
+  <meta name="theme-color" content="#ead6bf" />
+  <title>Editor de WAV</title>
   <link rel="stylesheet" href="/src/styles.css" />
 </head>
 <body>
-  <main id="app">
-    <h1>Sample Editor</h1>
-    <label class="btn primary">
-      Escolher áudio ou vídeo
-      <input id="file" type="file" accept="audio/*,video/*" hidden />
-    </label>
-    <p id="info" aria-live="polite">Nenhum arquivo carregado.</p>
+  <div id="app">
+    <header class="screen-head">
+      <span class="eyebrow">Sampler</span>
+      <h1>Editor de WAV</h1>
+    </header>
 
-    <section id="editor" hidden>
-      <canvas id="wave"></canvas>
-      <p id="sel" class="small"></p>
-      <div class="row">
-        <button id="zin" class="btn">＋</button>
-        <button id="zout" class="btn">－</button>
-        <button id="zall" class="btn">Tudo</button>
-        <button id="zsel" class="btn">Seleção</button>
-        <label class="chk"><input id="snap" type="checkbox" checked /> Snap zero</label>
-      </div>
-      <p class="small">Arraste os marcadores verde/vermelho para recortar. Arraste o fundo para rolar, use dois dedos (ou a roda do mouse) para zoom.</p>
-
-      <div class="row">
-        <button id="play" class="btn primary">▶ Tocar</button>
-        <button id="stop" class="btn">■ Parar</button>
-        <label class="chk"><input id="loop" type="checkbox" /> Loop</label>
-      </div>
-      <p id="lat" class="small"></p>
-
-      <h2>Edição</h2>
-      <p class="small">Dois toques rápidos num slider voltam ao valor padrão.</p>
-      <div class="field"><label>Fade in <output id="fiv">0 ms</output></label><input id="fi" type="range" min="0" max="2000" step="1" value="0" /></div>
-      <div class="field"><label>Fade out <output id="fov">0 ms</output></label><input id="fo" type="range" min="0" max="2000" step="1" value="0" /></div>
-      <div class="field"><label>Ganho <output id="gv">0.0 dB</output></label><input id="gain" type="range" min="-24" max="24" step="0.1" value="0" /></div>
-      <label class="chk"><input id="norm" type="checkbox" /> Normalizar (pico a −0,1 dBFS)</label>
-      <p id="peak" class="small"></p>
-
-      <h2>Exportar WAV</h2>
-      <div class="field"><label for="preset">Formato</label><select id="preset"></select></div>
-      <div class="field"><label for="fname">Nome do arquivo</label><input id="fname" type="text" /></div>
-      <div class="row">
-        <button id="share" class="btn primary" hidden>Compartilhar…</button>
-        <button id="download" class="btn">Baixar</button>
-        <button id="saveas" class="btn" hidden>Salvar em…</button>
-      </div>
-      <p id="exportMsg" class="small"></p>
+    <section class="panel">
+      <h2 class="panel-title">Arquivo</h2>
+      <label class="btn primary">
+        Escolher áudio ou vídeo
+        <input id="file" type="file" accept="audio/*,video/*" hidden />
+      </label>
+      <p id="info" class="note" aria-live="polite">Nenhum arquivo carregado.</p>
     </section>
-  </main>
+
+    <div id="editor" hidden>
+      <section class="panel">
+        <h2 class="panel-title">Forma de onda</h2>
+        <canvas id="wave"></canvas>
+        <p id="sel" class="readout"></p>
+        <div class="row">
+          <button id="zin" class="btn">Zoom +</button>
+          <button id="zout" class="btn">Zoom -</button>
+          <button id="zall" class="btn">Tudo</button>
+          <button id="zsel" class="btn">Seleção</button>
+        </div>
+        <label class="chk"><input id="snap" type="checkbox" checked /> Encaixar no cruzamento por zero</label>
+        <p class="note">Arraste os marcadores para recortar e o fundo para rolar. Dois dedos fazem zoom.</p>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Reprodução</h2>
+        <div class="row">
+          <button id="play" class="btn primary">Tocar</button>
+          <button id="stop" class="btn">Parar</button>
+          <label class="chk"><input id="loop" type="checkbox" /> Loop</label>
+        </div>
+        <p id="lat" class="note"></p>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Edição</h2>
+        <div class="field"><label for="fi">Fade in <output id="fiv">0 ms</output></label><input id="fi" type="range" min="0" max="2000" step="1" value="0" /></div>
+        <div class="field"><label for="fo">Fade out <output id="fov">0 ms</output></label><input id="fo" type="range" min="0" max="2000" step="1" value="0" /></div>
+        <div class="field"><label for="gain">Ganho <output id="gv">0,0 dB</output></label><input id="gain" type="range" min="-24" max="24" step="0.1" value="0" /></div>
+        <label class="chk"><input id="norm" type="checkbox" /> Normalizar (pico a −0,1 dBFS)</label>
+        <div class="row meter"><span class="eyebrow">Pico</span><span id="peak" class="tag"></span></div>
+        <p class="note">Dois toques num slider voltam ao valor padrão.</p>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Exportar WAV</h2>
+        <div class="field"><label for="preset">Formato</label><select id="preset"></select></div>
+        <div class="field"><label for="fname">Nome do arquivo</label><input id="fname" type="text" autocomplete="off" /></div>
+        <div class="row">
+          <button id="share" class="btn primary" hidden>Compartilhar</button>
+          <button id="download" class="btn">Baixar</button>
+          <button id="saveas" class="btn" hidden>Salvar em…</button>
+        </div>
+        <p id="exportMsg" class="note"></p>
+      </section>
+    </div>
+  </div>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
