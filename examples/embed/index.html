@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Exemplo: editor embutido</title>
+</head>
+<body>
+  <main style="max-width:720px;margin:0 auto;padding:16px">
+    <h1>Exemplo de app que embute o editor</h1>
+    <p>Este app não é o Sample Editor: ele só importa <code>createEditor</code>, fornece o arquivo e recebe o WAV exportado.</p>
+    <input id="file" type="file" accept="audio/*,video/*" />
+    <div id="editor"></div>
+    <p><button id="send" class="btn primary">Obter WAV exportado</button> <span id="result"></span></p>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

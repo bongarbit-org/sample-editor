@@ -1,5 +1,3 @@
-import { state, setEdit, on } from '../state.js';
-
 const MIN_SEL = 16; // amostras
 const HIT = 24; // px de tolerância ao toque nos handles
 const LEVELS = [256, 4096];
@@ -21,7 +19,8 @@ function buildPeaks(channels) {
   return levels;
 }
 
-export function createWaveform(canvas, { getPlayhead, snapEl, infoEl, zoomEl, onCommit }) {
+export function createWaveform(canvas, { store, getPlayhead, snapEl, infoEl, zoomEl, onCommit }) {
+  const { state, setEdit, on } = store;
   const g = canvas.getContext('2d');
   let peaks = null; // picos do original
   let proc = null; // { channels, peaks, start, len }: resultado da edição, desenhado dentro da seleção
@@ -232,7 +231,7 @@ export function createWaveform(canvas, { getPlayhead, snapEl, infoEl, zoomEl, on
   // enquadra rapidamente um handle (zoom de precisão)
   function zoomTo(sample, spp) { view.spp = spp; clampView(); view.offset = sample - (W / 2) * view.spp; clampView(); draw(); }
 
-  on((kind) => {
+  const off = on((kind) => {
     if (kind === 'audio') { peaks = buildPeaks(state.audio.channels); proc = null; resize(); zoomAll(); }
     else draw();
   });
@@ -242,7 +241,9 @@ export function createWaveform(canvas, { getPlayhead, snapEl, infoEl, zoomEl, on
     draw();
   }
   window.addEventListener('resize', resize);
-  new ResizeObserver(resize).observe(canvas);
+  const observer = new ResizeObserver(resize);
+  observer.observe(canvas);
+  const destroy = () => { off(); window.removeEventListener('resize', resize); observer.disconnect(); };
 
-  return { draw, zoomBy, zoomAll, zoomSelection, zoomTo, setProcessed };
+  return { draw, zoomBy, zoomAll, zoomSelection, zoomTo, setProcessed, destroy };
 }

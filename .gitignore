@@ -1,2 +1,8 @@
 node_modules
 dist
+
+# especificações locais (não versionar)
+specs/
+PLANO.md
+prompt-specs.md
+docs/

@@ -48,11 +48,11 @@ export class Voice {
     this.stop();
     this.source = src; this.gain = g; this.startedAt = c.currentTime - offset; this.duration = buffer.duration; this.loop = loop;
   }
-  // Troca o buffer de um loop em andamento mantendo a posição relativa (crossfade curto, sem clique).
-  swap(buffer) {
-    if (!this.source || !this.loop) return false;
-    const pos = this.position() / this.duration;
-    this.start(buffer, { loop: true, offset: Math.min(buffer.duration - 0.001, pos * buffer.duration), fadeInMs: 10 });
+  // Troca o buffer de uma reprodução em andamento (loop ou não), continuando de `offsetSec` no novo buffer.
+  // Crossfade curto: o som antigo some em ~8 ms enquanto o novo entra em ~10 ms, sem clique.
+  swap(buffer, offsetSec) {
+    if (!this.source) return false;
+    this.start(buffer, { loop: this.loop, offset: Math.max(0, Math.min(buffer.duration - 0.001, offsetSec)), fadeInMs: 10 });
     return true;
   }
   stop(fadeMs = 8) {
