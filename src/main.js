@@ -170,7 +170,7 @@ $('file').addEventListener('change', async () => {
   if (!file) return;
   info.textContent = `Lendo ${file.name} (${file.type || 'tipo desconhecido'}, ${(file.size / 1e6).toFixed(1)} MB)…`;
   try {
-    const audio = await decodeFile(file);
+    const audio = await decodeFile(file, (t) => { info.textContent = t; });
     setAudio(audio, file.name);
     const dur = (audio.channels[0].length / audio.sampleRate).toFixed(2);
     info.textContent = `${file.name} — ${dur}s, ${audio.sampleRate} Hz, ${audio.channels.length} canal(is)`;

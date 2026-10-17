@@ -1,9 +1,8 @@
 // Decodifica um File em { channels: Float32Array[], sampleRate }.
-// Fallback ffmpeg.wasm para formatos não suportados entra na Fase 7.
-export async function decodeFile(file) {
+// 1º tenta o decodificador nativo do navegador; se falhar (vídeo, formato exótico), usa ffmpeg.wasm.
+async function decodeArrayBuffer(data) {
   const Ctx = window.AudioContext || window.webkitAudioContext;
   if (!Ctx) throw new Error('Web Audio API indisponível neste navegador');
-  const data = await file.arrayBuffer();
   const ctx = new Ctx();
   try {
     // Forma com callbacks: compatível com Safari antigo, que não retorna Promise.
@@ -16,5 +15,15 @@ export async function decodeFile(file) {
     return { channels, sampleRate: buf.sampleRate };
   } finally {
     ctx.close();
+  }
+}
+
+export async function decodeFile(file, onStatus = () => {}) {
+  try {
+    return await decodeArrayBuffer(await file.arrayBuffer());
+  } catch (nativeErr) {
+    console.warn('Decodificação nativa falhou, usando ffmpeg.wasm:', nativeErr);
+    const { extractAudioWav } = await import('./ffmpeg.js'); // carrega só quando necessário
+    return decodeArrayBuffer(await extractAudioWav(file, onStatus));
   }
 }
