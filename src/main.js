@@ -25,7 +25,7 @@ function updatePeak() {
   const p = peak(rendered.channels), db = linToDb(p), el = $('peak');
   el.textContent = p > 1 ? `Clipping ${nf(db)} dBFS` : isFinite(db) ? `${nf(db)} dBFS` : '−∞ dBFS';
   el.className = 'tag' + (p > 1 ? ' error' : db > -1 ? ' warn' : '');
-  $('outdur').textContent = `Duração de saída: ${nf(rendered.channels[0].length / rendered.sampleRate, 3)} s`;
+  $('outdur').textContent = `Saída ${nf(rendered.channels[0].length / rendered.sampleRate, 3)} s · ×${nf(speedRatio(state.edit.speedSt), 2)}`;
 }
 
 // ---- waveform ----
@@ -47,6 +47,7 @@ const wave = createWaveform($('wave'), {
   },
   snapEl: $('snap'),
   infoEl: $('sel'),
+  zoomEl: $('zoomv'),
   onCommit: commit,
 });
 (function tick() { if (preview.playing) wave.draw(); requestAnimationFrame(tick); })();
@@ -77,7 +78,7 @@ function live() {
   liveQueued = true;
   requestAnimationFrame(() => { liveQueued = false; if (preview.playing) { dirty = true; preview.swap(getBuffer()); } });
 }
-const fmtSpeed = (v) => `${v > 0 ? '+' : ''}${nf(v)} st · ×${nf(speedRatio(v), 2)}`;
+const fmtSpeed = (v) => `${v > 0 ? '+' : ''}${nf(v)} st`;
 const SLIDERS = [
   ['fi', 'fiv', 'fadeInMs', (v) => `${v} ms`, 0],
   ['fo', 'fov', 'fadeOutMs', (v) => `${v} ms`, 0],
@@ -163,7 +164,7 @@ on((kind) => {
   dirty = true;
   if (kind !== 'audio') return;
   $('editor').hidden = false;
-  for (const [id, out, txt] of [['fi', 'fiv', '0 ms'], ['fo', 'fov', '0 ms'], ['gain', 'gv', '0,0 dB'], ['speed', 'spv', '+0,0 st · ×1,00']]) { $(id).value = 0; $(out).textContent = txt; }
+  for (const [id, out, txt] of [['fi', 'fiv', '0 ms'], ['fo', 'fov', '0 ms'], ['gain', 'gv', '0,0 dB'], ['speed', 'spv', '+0,0 st']]) { $(id).value = 0; $(out).textContent = txt; }
   $('norm').checked = false; $('rev').checked = false;
   $('fname').value = state.name.replace(/\.[^.]+$/, '');
   preview.stop();

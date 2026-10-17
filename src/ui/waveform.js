@@ -21,7 +21,7 @@ function buildPeaks(channels) {
   return levels;
 }
 
-export function createWaveform(canvas, { getPlayhead, snapEl, infoEl, onCommit }) {
+export function createWaveform(canvas, { getPlayhead, snapEl, infoEl, zoomEl, onCommit }) {
   const g = canvas.getContext('2d');
   let peaks = null; // picos do original
   let proc = null; // { channels, peaks, start, len }: resultado da edição, desenhado dentro da seleção
@@ -140,7 +140,8 @@ export function createWaveform(canvas, { getPlayhead, snapEl, infoEl, onCommit }
       const sr = state.audio.sampleRate;
       const f = (s) => (s / sr).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' s';
       const z = view.spp.toLocaleString('pt-BR', { maximumFractionDigits: view.spp < 10 ? 2 : 0 });
-      infoEl.innerHTML = `<span>Início <b>${f(start)}</b></span><span>Fim <b>${f(end)}</b></span><span>Duração <b>${f(end - start)}</b></span><span>Zoom <b>${z} amostras/px</b></span>`;
+      infoEl.innerHTML = `<span>Início <b>${f(start)}</b></span><span>Fim <b>${f(end)}</b></span><span>Duração <b>${f(end - start)}</b></span>`;
+      if (zoomEl) zoomEl.textContent = `Zoom ${z} amostras/px`;
     }
   }
 

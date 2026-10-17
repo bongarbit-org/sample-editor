@@ -14,9 +14,8 @@
       <h1>Editor de WAV</h1>
     </header>
 
-    <section class="panel">
-      <h2 class="panel-title">Arquivo</h2>
-      <label class="btn primary">
+    <section class="panel file-panel">
+      <label class="btn sm primary">
         Escolher áudio ou vídeo
         <input id="file" type="file" accept="audio/*,video/*" hidden />
       </label>
@@ -24,41 +23,39 @@
     </section>
 
     <div id="editor" hidden>
-      <section class="panel">
-        <h2 class="panel-title">Forma de onda</h2>
+      <!-- Forma de onda + reprodução + edição num só bloco, para caber numa tela de celular -->
+      <section class="panel stage" aria-label="Forma de onda, reprodução e edição">
         <canvas id="wave"></canvas>
         <p id="sel" class="readout"></p>
-        <div class="row">
-          <button id="zin" class="btn">Zoom +</button>
-          <button id="zout" class="btn">Zoom -</button>
-          <button id="zall" class="btn">Tudo</button>
-          <button id="zsel" class="btn">Seleção</button>
+        <p class="readout"><span id="zoomv"></span><span id="outdur"></span></p>
+        <div class="row tight zoomrow">
+          <button id="zin" class="btn sm">Zoom +</button>
+          <button id="zout" class="btn sm">Zoom -</button>
+          <button id="zall" class="btn sm">Tudo</button>
+          <button id="zsel" class="btn sm">Seleção</button>
         </div>
-        <label class="chk"><input id="snap" type="checkbox" checked /> Encaixar no cruzamento por zero</label>
-        <p class="note">Arraste os marcadores para recortar e o fundo para rolar. Dois dedos fazem zoom.</p>
-      </section>
-
-      <section class="panel">
-        <h2 class="panel-title">Reprodução</h2>
-        <div class="row">
-          <button id="play" class="btn primary">Tocar</button>
-          <button id="stop" class="btn">Parar</button>
+        <div class="row tight">
+          <button id="play" class="btn sm primary">Tocar</button>
+          <button id="stop" class="btn sm">Parar</button>
           <label class="chk"><input id="loop" type="checkbox" /> Loop</label>
+          <span id="peak" class="tag push"></span>
         </div>
-        <p id="lat" class="note"></p>
-      </section>
-
-      <section class="panel">
-        <h2 class="panel-title">Edição</h2>
-        <div class="field"><label for="fi">Fade in <output id="fiv">0 ms</output></label><input id="fi" type="range" min="0" max="2000" step="1" value="0" /></div>
-        <div class="field"><label for="fo">Fade out <output id="fov">0 ms</output></label><input id="fo" type="range" min="0" max="2000" step="1" value="0" /></div>
-        <div class="field"><label for="gain">Ganho <output id="gv">0,0 dB</output></label><input id="gain" type="range" min="-24" max="24" step="0.1" value="0" /></div>
-        <div class="field"><label for="speed">Velocidade <output id="spv">+0,0 st · ×1,00</output></label><input id="speed" type="range" min="-24" max="24" step="0.1" value="0" /></div>
-        <label class="chk"><input id="rev" type="checkbox" /> Inverter (reverse)</label>
-        <label class="chk"><input id="norm" type="checkbox" /> Normalizar (pico a −0,1 dBFS)</label>
-        <div class="row meter"><span class="eyebrow">Pico</span><span id="peak" class="tag"></span></div>
-        <p id="outdur" class="note"></p>
-        <p class="note">Velocidade altera tom e duração juntos, como num sampler. Dois toques num slider voltam ao valor padrão.</p>
+        <div class="grid2">
+          <div class="field"><label for="fi">Fade in <output id="fiv">0 ms</output></label><input id="fi" type="range" min="0" max="2000" step="1" value="0" /></div>
+          <div class="field"><label for="fo">Fade out <output id="fov">0 ms</output></label><input id="fo" type="range" min="0" max="2000" step="1" value="0" /></div>
+          <div class="field"><label for="gain">Ganho <output id="gv">0,0 dB</output></label><input id="gain" type="range" min="-24" max="24" step="0.1" value="0" /></div>
+          <div class="field"><label for="speed">Veloc. <output id="spv">+0,0 st</output></label><input id="speed" type="range" min="-24" max="24" step="0.1" value="0" /></div>
+        </div>
+        <div class="row tight checks">
+          <label class="chk"><input id="rev" type="checkbox" /> Inverter</label>
+          <label class="chk"><input id="norm" type="checkbox" /> Normalizar</label>
+          <label class="chk"><input id="snap" type="checkbox" checked /> Snap</label>
+        </div>
+        <details class="help">
+          <summary>Ajuda</summary>
+          <p class="note">Arraste os marcadores para recortar e o fundo para rolar. Dois dedos fazem zoom. Snap zero encaixa o marcador no cruzamento por zero. Normalizar leva o pico a −0,1 dBFS. Velocidade altera tom e duração juntos, em semitons (st). Dois toques num slider voltam ao padrão.</p>
+          <p id="lat" class="note"></p>
+        </details>
       </section>
 
       <section class="panel">
