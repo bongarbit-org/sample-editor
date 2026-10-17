@@ -3,7 +3,6 @@ import { state, setAudio, setEdit, on } from './state.js';
 import { renderEdit, peak, linToDb, toMono, toStereo, speedRatio } from './audio/process.js';
 import { encodeWav } from './audio/wav.js';
 import { resample } from './audio/resample.js';
-import { PRESETS } from './audio/presets.js';
 import { Voice, makeBuffer, unlockOnFirstGesture, latencyMs } from './audio/player.js';
 import { createWaveform } from './ui/waveform.js';
 
@@ -102,16 +101,15 @@ $('norm').onchange = () => { setEdit({ normalize: $('norm').checked }); live(); 
 $('rev').onchange = () => { setEdit({ reverse: $('rev').checked }); live(); commit(); };
 
 // ---- exportação ----
-PRESETS.forEach((p) => $('preset').add(new Option(p.label, p.id)));
 const msg = (t) => { $('exportMsg').textContent = t; };
 const fileName = () => ($('fname').value.trim() || 'sample').replace(/\.wav$/i, '') + '.wav';
 
 async function buildWav() {
-  const preset = PRESETS.find((p) => p.id === $('preset').value);
+  const mono = $('chan').value === 'mono', rate = Number($('rate').value), bits = Number($('bits').value);
   const r = getRendered();
-  let ch = preset.channels === 'mono' ? toMono(r.channels) : preset.channels === 'stereo' ? toStereo(r.channels) : r.channels;
-  ch = await resample(ch, r.sampleRate, preset.sampleRate);
-  return new File([encodeWav(ch, preset.sampleRate, preset.bits, preset.bits < 24)], fileName(), { type: 'audio/wav' });
+  let ch = mono ? toMono(r.channels) : toStereo(r.channels);
+  ch = await resample(ch, r.sampleRate, rate);
+  return new File([encodeWav(ch, rate, bits, bits < 24)], fileName(), { type: 'audio/wav' });
 }
 // O WAV é gerado em segundo plano após cada edição, para que "Compartilhar"/"Salvar" rodem
 // dentro do gesto do usuário (navegadores móveis exigem isso) sem esperar o processamento.
@@ -124,7 +122,7 @@ function scheduleExport() {
   exportPromise = null; clearTimeout(exportTimer);
   exportTimer = setTimeout(() => { if (state.audio) getExport().catch(() => {}); }, 400);
 }
-$('preset').onchange = scheduleExport;
+for (const id of ['chan', 'rate', 'bits']) $(id).onchange = scheduleExport;
 $('fname').oninput = scheduleExport;
 
 $('download').onclick = async () => {
