@@ -4,7 +4,7 @@ const listeners = new Set();
 export const state = {
   audio: null, // { channels: Float32Array[], sampleRate }
   name: '',
-  edit: { start: 0, end: 0, fadeInMs: 0, fadeOutMs: 0, gainDb: 0, normalize: false },
+  edit: { start: 0, end: 0, fadeInMs: 0, fadeOutMs: 0, gainDb: 0, normalize: false, speedSt: 0, reverse: false },
 };
 
 export function on(fn) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -13,7 +13,7 @@ function emit(kind) { listeners.forEach((fn) => fn(kind)); }
 export function setAudio(audio, name) {
   state.audio = audio;
   state.name = name;
-  state.edit = { start: 0, end: audio.channels[0].length, fadeInMs: 0, fadeOutMs: 0, gainDb: 0, normalize: false };
+  state.edit = { start: 0, end: audio.channels[0].length, fadeInMs: 0, fadeOutMs: 0, gainDb: 0, normalize: false, speedSt: 0, reverse: false };
   emit('audio');
 }
 

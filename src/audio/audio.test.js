@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyFades, applyGain, normalize, peak, renderEdit, toMono } from './process.js';
+import { applyFades, applyGain, normalize, peak, renderEdit, toMono, resampleLinear, speedRatio } from './process.js';
 import { encodeWav } from './wav.js';
 
 const ones = (n) => [new Float32Array(n).fill(1)];
@@ -19,6 +19,25 @@ describe('process', () => {
     const r = renderEdit(audio, { start: 1, end: 3, fadeInMs: 0, fadeOutMs: 0, gainDb: 0, normalize: false });
     expect(r.channels[0].length).toBe(2);
     expect(Array.from(toMono(r.channels)[0])).toEqual([0.5, 1]);
+  });
+});
+
+describe('velocidade e reverse', () => {
+  const audio = { channels: [new Float32Array([1, 2, 3, 4])], sampleRate: 44100 };
+  const base = { start: 0, end: 4, fadeInMs: 0, fadeOutMs: 0, gainDb: 0, normalize: false, speedSt: 0, reverse: false };
+  it('reverse inverte a seleção sem alterar o original', () => {
+    const r = renderEdit(audio, { ...base, reverse: true });
+    expect(Array.from(r.channels[0])).toEqual([4, 3, 2, 1]);
+    expect(Array.from(audio.channels[0])).toEqual([1, 2, 3, 4]);
+  });
+  it('+12 semitons dobra a taxa declarada e mantém as amostras', () => {
+    const r = renderEdit(audio, { ...base, speedSt: 12 });
+    expect(r.sampleRate).toBeCloseTo(88200, 3); expect(r.channels[0].length).toBe(4);
+    expect(speedRatio(-12)).toBeCloseTo(0.5, 6);
+  });
+  it('resampleLinear interpola e muda o comprimento', () => {
+    const o = resampleLinear(new Float32Array([0, 1]), 1, 2);
+    expect(o.length).toBe(4); expect(o[1]).toBeCloseTo(0.5, 6);
   });
 });
 

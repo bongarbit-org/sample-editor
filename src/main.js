@@ -1,6 +1,6 @@
 import { decodeFile } from './audio/decode.js';
 import { state, setAudio, setEdit, on } from './state.js';
-import { renderEdit, peak, linToDb, toMono, toStereo } from './audio/process.js';
+import { renderEdit, peak, linToDb, toMono, toStereo, speedRatio } from './audio/process.js';
 import { encodeWav } from './audio/wav.js';
 import { resample } from './audio/resample.js';
 import { PRESETS } from './audio/presets.js';
@@ -26,6 +26,7 @@ function updatePeak() {
   const p = peak(rendered.channels), db = linToDb(p), el = $('peak');
   el.textContent = p > 1 ? `Clipping ${nf(db)} dBFS` : isFinite(db) ? `${nf(db)} dBFS` : '−∞ dBFS';
   el.className = 'tag' + (p > 1 ? ' error' : db > -1 ? ' warn' : '');
+  $('outdur').textContent = `Duração de saída: ${nf(rendered.channels[0].length / rendered.sampleRate, 3)} s`;
 }
 
 // ---- waveform ----
@@ -41,7 +42,9 @@ function commit() {
 const wave = createWaveform($('wave'), {
   getPlayhead() {
     const pos = preview.position();
-    return pos == null ? null : state.edit.start + pos * state.audio.sampleRate;
+    if (pos == null || !rendered) return null;
+    const off = pos * rendered.sampleRate, len = rendered.channels[0].length; // reverse: o cursor anda da direita para a esquerda
+    return state.edit.start + (state.edit.reverse ? len - off : off);
   },
   snapEl: $('snap'),
   infoEl: $('sel'),
@@ -75,10 +78,12 @@ function live() {
   liveQueued = true;
   requestAnimationFrame(() => { liveQueued = false; if (preview.playing) { dirty = true; preview.swap(getBuffer()); } });
 }
+const fmtSpeed = (v) => `${v > 0 ? '+' : ''}${nf(v)} st · ×${nf(speedRatio(v), 2)}`;
 const SLIDERS = [
   ['fi', 'fiv', 'fadeInMs', (v) => `${v} ms`, 0],
   ['fo', 'fov', 'fadeOutMs', (v) => `${v} ms`, 0],
   ['gain', 'gv', 'gainDb', (v) => `${nf(v)} dB`, 0],
+  ['speed', 'spv', 'speedSt', fmtSpeed, 0],
 ];
 for (const [id, outId, key, fmt, def] of SLIDERS) {
   const el = $(id);
@@ -94,6 +99,7 @@ for (const [id, outId, key, fmt, def] of SLIDERS) {
   });
 }
 $('norm').onchange = () => { setEdit({ normalize: $('norm').checked }); live(); commit(); };
+$('rev').onchange = () => { setEdit({ reverse: $('rev').checked }); live(); commit(); };
 
 // ---- exportação ----
 PRESETS.forEach((p) => $('preset').add(new Option(p.label, p.id)));
@@ -159,8 +165,8 @@ on((kind) => {
   dirty = true;
   if (kind !== 'audio') return;
   $('editor').hidden = false;
-  for (const [id, out, txt] of [['fi', 'fiv', '0 ms'], ['fo', 'fov', '0 ms'], ['gain', 'gv', '0,0 dB']]) { $(id).value = 0; $(out).textContent = txt; }
-  $('norm').checked = false;
+  for (const [id, out, txt] of [['fi', 'fiv', '0 ms'], ['fo', 'fov', '0 ms'], ['gain', 'gv', '0,0 dB'], ['speed', 'spv', '+0,0 st · ×1,00']]) { $(id).value = 0; $(out).textContent = txt; }
+  $('norm').checked = false; $('rev').checked = false;
   $('fname').value = state.name.replace(/\.[^.]+$/, '');
   preview.stop();
   commit();

@@ -1,5 +1,7 @@
 // Preview compartilha um AudioContext (criado/desbloqueado no primeiro gesto do usuário).
 let ctx = null;
+import { toSafeRate } from './resample.js';
+
 export function getCtx() {
   if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
   if (ctx.state === 'suspended') ctx.resume();
@@ -25,8 +27,9 @@ export function latencyMs() {
 
 export function makeBuffer(rendered) {
   const c = getCtx();
-  const b = c.createBuffer(rendered.channels.length, rendered.channels[0].length, rendered.sampleRate);
-  rendered.channels.forEach((ch, i) => b.copyToChannel(ch, i));
+  const { channels, rate } = toSafeRate(rendered.channels, rendered.sampleRate);
+  const b = c.createBuffer(channels.length, channels[0].length, rate);
+  channels.forEach((ch, i) => b.copyToChannel(ch, i));
   return b;
 }
 
