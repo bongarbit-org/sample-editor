@@ -65,6 +65,16 @@
           <option value="8000">8 kHz</option><option value="11025">11,025 kHz</option><option value="16000">16 kHz</option><option value="22050">22,05 kHz</option>
           <option value="32000">32 kHz</option><option value="44100" selected>44,1 kHz</option><option value="48000">48 kHz</option><option value="88200">88,2 kHz</option><option value="96000">96 kHz</option></select></div>
         <div class="field"><label for="bits">Resolução</label><select id="bits"><option value="8">8 bits</option><option value="16" selected>16 bits</option><option value="24">24 bits</option></select></div>
+        <div class="field"><label for="dither">Dither</label><select id="dither"><option value="on" selected>Ligado</option><option value="off">Desligado</option></select></div>
+        <div class="field">
+          <label>Comparar (mesma posição)</label>
+          <div class="row tight">
+            <button id="abA" class="btn sm">Editado</button>
+            <button id="abB" class="btn sm">Exportado</button>
+            <button id="abStop" class="btn sm">Parar</button>
+          </div>
+          <p id="abNote" class="note"></p>
+        </div>
         <div class="field"><label for="fname">Nome do arquivo</label><input id="fname" type="text" autocomplete="off" /></div>
         <div class="row">
           <button id="share" class="btn primary" hidden>Compartilhar</button>

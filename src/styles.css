@@ -133,3 +133,4 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 26px; }
 .help summary { cursor: pointer; font-size: var(--fs-micro); font-weight: 600; letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--text-muted); padding: var(--space-1) 0; }
 .help .note { margin-top: var(--space-2); }
 .chk { white-space: nowrap; }
+.btn.on { background: var(--preto-grafite); color: var(--papel); } /* selecionado: tinta cheia */

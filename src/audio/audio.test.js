@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { applyFades, applyGain, normalize, peak, renderEdit, toMono, resampleLinear, speedRatio } from './process.js';
-import { encodeWav } from './wav.js';
+import { encodeWav, quantize, quantizeToFloat } from './wav.js';
 
 const ones = (n) => [new Float32Array(n).fill(1)];
 
@@ -39,6 +39,20 @@ describe('velocidade e reverse', () => {
     const o = resampleLinear(new Float32Array([0, 1]), 1, 2);
     expect(o.length).toBe(4); expect(o[1]).toBeCloseTo(0.5, 6);
   });
+});
+
+describe('quantização', () => {
+  it('8 bits tem 255 níveis e volta ao float arredondado', () => {
+    const f = quantizeToFloat([new Float32Array([0, 0.5, -1, 2])], 8, false)[0];
+    [0, 64 / 127, -1, 1].forEach((v, i) => expect(f[i]).toBeCloseTo(v, 6));
+  });
+  it('sem dither é determinístico; com dither a média do erro é ~0', () => {
+    expect(quantize(0.3, 16, false)).toBe(quantize(0.3, 16, false));
+    let err = 0; const N = 20000;
+    for (let i = 0; i < N; i++) err += quantize(0.3, 8, true) / 127 - 0.3;
+    expect(Math.abs(err / N)).toBeLessThan(0.002);
+  });
+  it('24 bits ignora dither', () => { expect(quantize(0.3, 24, true)).toBe(quantize(0.3, 24, false)); });
 });
 
 describe('wav', () => {

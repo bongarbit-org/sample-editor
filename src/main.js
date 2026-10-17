@@ -1,7 +1,7 @@
 import { decodeFile } from './audio/decode.js';
 import { state, setAudio, setEdit, on } from './state.js';
 import { renderEdit, peak, linToDb, toMono, toStereo, speedRatio } from './audio/process.js';
-import { encodeWav } from './audio/wav.js';
+import { encodeWav, quantizeToFloat } from './audio/wav.js';
 import { resample } from './audio/resample.js';
 import { Voice, makeBuffer, unlockOnFirstGesture, latencyMs } from './audio/player.js';
 import { createWaveform } from './ui/waveform.js';
@@ -50,7 +50,13 @@ const wave = createWaveform($('wave'), {
   zoomEl: $('zoomv'),
   onCommit: commit,
 });
-(function tick() { if (preview.playing) wave.draw(); requestAnimationFrame(tick); })();
+(function tick() {
+  const on = preview.playing;
+  if (on) wave.draw();
+  $('abA').classList.toggle('on', on && ab === 'a');
+  $('abB').classList.toggle('on', on && ab === 'b');
+  requestAnimationFrame(tick);
+})();
 
 $('zin').onclick = () => wave.zoomBy(0.5);
 $('zout').onclick = () => wave.zoomBy(2);
@@ -58,14 +64,14 @@ $('zall').onclick = () => wave.zoomAll();
 $('zsel').onclick = () => wave.zoomSelection();
 
 // ---- transporte: dispara em pointerdown (o "click" em toque espera o fim do gesto) ----
-function play() { if (state.audio) { preview.start(getBuffer(), { loop: $('loop').checked }); showLatency(); } }
+function play() { if (state.audio) { ab = 'a'; preview.start(getBuffer(), { loop: $('loop').checked }); showLatency(); } }
 function showLatency() {
   const ms = latencyMs();
   $('lat').textContent = ms == null ? '' : `Latência de saída estimada: ~${ms} ms. Fones Bluetooth somam 100 a 250 ms.`;
 }
 $('play').addEventListener('pointerdown', (e) => { e.preventDefault(); play(); });
 $('play').addEventListener('click', (e) => { if (e.detail === 0) play(); }); // teclado/acessibilidade
-$('stop').addEventListener('pointerdown', (e) => { e.preventDefault(); preview.stop(); });
+$('stop').addEventListener('pointerdown', (e) => { e.preventDefault(); preview.stop(); ab = null; });
 $('stop').addEventListener('click', (e) => { if (e.detail === 0) preview.stop(); });
 $('loop').onchange = () => { if (preview.playing) preview.start(getBuffer(), { loop: $('loop').checked }); };
 
@@ -105,25 +111,70 @@ $('rev').onchange = () => { setEdit({ reverse: $('rev').checked }); live(); comm
 const msg = (t) => { $('exportMsg').textContent = t; };
 const fileName = () => ($('fname').value.trim() || 'sample').replace(/\.wav$/i, '') + '.wav';
 
-async function buildWav() {
+// Dados exportados (canais já reamostrados) são calculados uma vez e servem ao arquivo e à prévia B.
+async function buildExportData() {
   const mono = $('chan').value === 'mono', rate = Number($('rate').value), bits = Number($('bits').value);
+  const dither = $('dither').value === 'on' && bits < 24;
   const r = getRendered();
-  let ch = mono ? toMono(r.channels) : toStereo(r.channels);
-  ch = await resample(ch, r.sampleRate, rate);
-  return new File([encodeWav(ch, rate, bits, bits < 24)], fileName(), { type: 'audio/wav' });
+  const ch = await resample(mono ? toMono(r.channels) : toStereo(r.channels), r.sampleRate, rate);
+  return { ch, rate, bits, dither, mono };
+}
+async function buildWav() {
+  const d = await getExportData();
+  return new File([encodeWav(d.ch, d.rate, d.bits, d.dither)], fileName(), { type: 'audio/wav' });
 }
 // O WAV é gerado em segundo plano após cada edição, para que "Compartilhar"/"Salvar" rodem
 // dentro do gesto do usuário (navegadores móveis exigem isso) sem esperar o processamento.
-let exportPromise = null, exportTimer = 0;
+let exportPromise = null, dataPromise = null, exportTimer = 0;
+function getExportData() {
+  if (!dataPromise) dataPromise = buildExportData().catch((e) => { dataPromise = null; throw e; });
+  return dataPromise;
+}
 function getExport() {
   if (!exportPromise) exportPromise = buildWav().catch((e) => { exportPromise = null; throw e; });
   return exportPromise;
 }
 function scheduleExport() {
-  exportPromise = null; clearTimeout(exportTimer);
+  exportPromise = dataPromise = null; clearTimeout(exportTimer);
   exportTimer = setTimeout(() => { if (state.audio) getExport().catch(() => {}); }, 400);
 }
-for (const id of ['chan', 'rate', 'bits']) $(id).onchange = scheduleExport;
+// 8 bits: dither desligado por padrão (o chiado é audível); 16 bits: ligado; 24 bits: não se aplica.
+function syncDither() {
+  const bits = Number($('bits').value);
+  $('dither').disabled = bits === 24;
+  if (bits === 24) $('dither').value = 'off'; else $('dither').value = bits === 8 ? 'off' : 'on';
+}
+$('bits').addEventListener('change', syncDither);
+syncDither();
+for (const id of ['chan', 'rate', 'bits', 'dither']) $(id).addEventListener('change', scheduleExport);
+
+// ---- comparar: editado (A) x formato exportado (B), tocando da mesma posição ----
+let ab = null;
+const fmtHz = (hz) => `${nf(hz / 1000, hz % 1000 ? 3 : 1).replace(/,?0+$/, '')} kHz`;
+async function playAB(which) {
+  if (!state.audio) return;
+  const loop = $('loop').checked;
+  const frac = preview.playing ? preview.position() / preview.duration : 0;
+  let buffer;
+  if (which === 'a') buffer = getBuffer();
+  else {
+    $('abNote').textContent = 'Preparando o formato exportado…';
+    try {
+      const d = await getExportData();
+      buffer = makeBuffer({ channels: quantizeToFloat(d.ch, d.bits, d.dither), sampleRate: d.rate });
+      $('abNote').textContent = `Exportado: ${d.mono ? 'mono' : 'estéreo'} · ${fmtHz(d.rate)} · ${d.bits} bits · dither ${d.dither ? 'ligado' : 'desligado'}.`;
+    } catch (e) { $('abNote').textContent = 'Erro ao preparar: ' + e.message; return; }
+  }
+  ab = which;
+  preview.start(buffer, { loop, offset: Math.min(buffer.duration - 0.001, frac * buffer.duration), fadeInMs: 5 });
+}
+const press = (id, fn) => { // pointerdown: dispara sem esperar o fim do toque; click só para teclado
+  $(id).addEventListener('pointerdown', (e) => { e.preventDefault(); fn(); });
+  $(id).addEventListener('click', (e) => { if (e.detail === 0) fn(); });
+};
+press('abA', () => playAB('a'));
+press('abB', () => playAB('b'));
+press('abStop', () => { preview.stop(); ab = null; });
 $('fname').oninput = scheduleExport;
 
 $('download').onclick = async () => {
