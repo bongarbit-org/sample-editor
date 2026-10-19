@@ -51,13 +51,14 @@ export function resampleLinear(ch, from, to) {
 // é apenas declarado numa taxa maior/menor (sampleRate * razão); quem toca ou exporta converte a taxa.
 export const speedRatio = (semitones) => Math.pow(2, (semitones || 0) / 12);
 
-// recorte -> reverse -> normalização (opcional) -> ganho -> fades (em ms de saída) -> velocidade (taxa)
+// Com `reverse`, a linha do tempo exibida é o arquivo inteiro espelhado: início/fim valem nessa linha do tempo,
+// então o recorte acompanha o que se vê na tela. Ordem: recorte -> normalização (opcional) -> ganho -> fades.
 export function renderEdit(audio, edit) {
   const len = audio.channels[0].length;
   const start = Math.max(0, Math.min(edit.start, len - 1));
   const end = Math.max(start + 1, Math.min(edit.end, len));
   const rate = audio.sampleRate * speedRatio(edit.speedSt);
-  let ch = sliceChannels(audio.channels, start, end);
+  let ch = edit.reverse ? sliceChannels(audio.channels, len - end, len - start) : sliceChannels(audio.channels, start, end);
   if (edit.reverse) for (const c of ch) c.reverse();
   if (edit.normalize) normalize(ch);
   applyGain(ch, edit.gainDb);

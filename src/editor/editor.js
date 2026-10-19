@@ -45,15 +45,16 @@ export function createEditor(root, opts = {}) {
   const preview = new Voice();
   // Aplica a edição à imagem da forma de onda (ao soltar slider/marcador) e pré-monta o buffer de áudio.
   // Descreve o buffer em reprodução para continuar do MESMO ponto da seleção após qualquer edição.
-  // O cursor sempre anda da esquerda para a direita; com "Inverter" só a onda desenhada fica espelhada.
+  // O cursor sempre anda da esquerda para a direita; com "Inverter" a linha do tempo inteira é espelhada.
   let playMeta = null, playKey = ''; // playKey: edição do buffer em reprodução (evita trocas repetidas)
-  const metaOf = (r) => ({ start: state.edit.start, len: r.channels[0].length, rate: r.sampleRate });
+  const metaOf = (r) => ({ start: state.edit.start, len: r.channels[0].length, rate: r.sampleRate, reverse: state.edit.reverse });
   function liveSwap() {
     if (!preview.playing || ab === 'b' || !playMeta) return; // B (formato exportado) não acompanha edições
     const key = JSON.stringify(state.edit);
     if (key === playKey) return;
     playKey = key;
-    const x = playMeta.start + preview.position() * playMeta.rate; // posição do cursor, em amostras do arquivo
+    let x = playMeta.start + preview.position() * playMeta.rate; // posição do cursor, em amostras da linha do tempo exibida
+    if (playMeta.reverse !== state.edit.reverse) x = state.audio.channels[0].length - x; // reverse alternado: mesmo material no espelho
     dirty = true;
     const r = getRendered(), buf = getBuffer();
     let noff = x - state.edit.start;
@@ -168,7 +169,12 @@ export function createEditor(root, opts = {}) {
   document.addEventListener('keydown', onKey);
 
   $('norm').onchange = () => { setEdit({ normalize: $('norm').checked }); live(); commit(); };
-  $('rev').onchange = () => { setEdit({ reverse: $('rev').checked }); live(); commit(); };
+  // Alternar o reverse espelha a linha do tempo: início/fim passam para o espelho, e o trecho escolhido continua o mesmo.
+  $('rev').onchange = () => {
+    const N = state.audio.channels[0].length, e = state.edit;
+    setEdit({ reverse: $('rev').checked, start: N - e.end, end: N - e.start });
+    live(); commit();
+  };
 
   // ---- exportação ----
   const msg = (t) => { $('exportMsg').textContent = t; };

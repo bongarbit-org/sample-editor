@@ -2,7 +2,7 @@ const MIN_SEL = 16; // amostras
 const HIT = 24; // px de tolerância ao toque nos handles
 const LEVELS = [256, 4096];
 
-function buildPeaks(channels) {
+function buildPeaks(channels, reversed = false) {
   const n = channels[0].length;
   const levels = {};
   for (const B of LEVELS) {
@@ -11,7 +11,7 @@ function buildPeaks(channels) {
     for (let b = 0; b < m; b++) {
       let lo = 1, hi = -1;
       const e = Math.min(n, (b + 1) * B);
-      for (const ch of channels) for (let i = b * B; i < e; i++) { const x = ch[i]; if (x < lo) lo = x; if (x > hi) hi = x; }
+      for (const ch of channels) for (let i = b * B; i < e; i++) { const x = reversed ? ch[n - 1 - i] : ch[i]; if (x < lo) lo = x; if (x > hi) hi = x; }
       min[b] = lo; max[b] = hi;
     }
     levels[B] = { min, max };
@@ -22,7 +22,9 @@ function buildPeaks(channels) {
 export function createWaveform(canvas, { store, getPlayhead, snapEl, infoEl, zoomEl, onCommit }) {
   const { state, setEdit, on } = store;
   const g = canvas.getContext('2d');
-  let peaks = null; // picos do original
+  let peaks = null, peaksRev = null; // picos do original (e do original espelhado, criado sob demanda)
+  const rev = () => !!state.edit.reverse;
+  const origPeaks = () => (rev() ? (peaksRev ||= buildPeaks(state.audio.channels, true)) : peaks);
   let proc = null; // { channels, peaks, start, len }: resultado da edição, desenhado dentro da seleção
   const view = { offset: 0, spp: 1 }; // spp = amostras por pixel
   let W = 0, H = 0;
@@ -47,7 +49,7 @@ export function createWaveform(canvas, { store, getPlayhead, snapEl, infoEl, zoo
     clampView(); draw();
   }
 
-  function rangeIn(pk, ch, s0, s1) {
+  function rangeIn(pk, ch, s0, s1, mirror = false) {
     const span = s1 - s0;
     for (let li = LEVELS.length - 1; li >= 0; li--) {
       const B = LEVELS[li];
@@ -60,28 +62,30 @@ export function createWaveform(canvas, { store, getPlayhead, snapEl, infoEl, zoo
       }
     }
     let lo = 1, hi = -1;
-    for (const c of ch) for (let i = s0; i < s1; i++) { const x = c[i]; if (x < lo) lo = x; if (x > hi) hi = x; }
+    for (const c of ch) for (let i = s0; i < s1; i++) { const x = mirror ? c[c.length - 1 - i] : c[i]; if (x < lo) lo = x; if (x > hi) hi = x; }
     return [lo, hi];
   }
 
   // Dentro da seleção usa o áudio já editado (fades/ganho/normalização); fora, o original.
   function range(s0, s1) {
     const orig = state.audio.channels;
-    if (!proc) return rangeIn(peaks, orig, s0, s1);
+    const op = origPeaks(), m = rev();
+    if (!proc) return rangeIn(op, orig, s0, s1, m);
     let lo = 1, hi = -1;
     const merge = ([l, h]) => { if (l < lo) lo = l; if (h > hi) hi = h; };
     const a = Math.max(s0, proc.start), b = Math.min(s1, proc.start + proc.len);
     if (a < b) merge(rangeIn(proc.peaks, proc.channels, a - proc.start, b - proc.start));
     const e1 = Math.min(s1, proc.start);
-    if (s0 < e1) merge(rangeIn(peaks, orig, s0, e1));
+    if (s0 < e1) merge(rangeIn(op, orig, s0, e1, m));
     const e0 = Math.max(s0, proc.start + proc.len);
-    if (e0 < s1) merge(rangeIn(peaks, orig, e0, s1));
+    if (e0 < s1) merge(rangeIn(op, orig, e0, s1, m));
     return [lo, hi];
   }
 
   function sampleAt(i) {
     if (proc && i >= proc.start && i < proc.start + proc.len) return proc.channels[0][i - proc.start];
-    return state.audio.channels[0][i];
+    const c0 = state.audio.channels[0];
+    return rev() ? c0[c0.length - 1 - i] : c0[i];
   }
 
   // Cores vêm dos tokens CSS (design.md) para a forma de onda seguir a identidade visual.
@@ -146,9 +150,10 @@ export function createWaveform(canvas, { store, getPlayhead, snapEl, infoEl, zoo
 
   function snap(s) {
     if (!snapEl || !snapEl.checked) return s;
-    const c = state.audio.channels[0], n = c.length, R = 2048;
+    const c = state.audio.channels[0], n = c.length, R = 2048, m = rev();
+    const v = (i) => (m ? c[n - 1 - i] : c[i]); // valor na linha do tempo exibida
     for (let d = 0; d < R; d++) for (const i of [s - d, s + d]) {
-      if (i > 0 && i < n && (c[i - 1] <= 0) !== (c[i] <= 0)) return i;
+      if (i > 0 && i < n && (v(i - 1) <= 0) !== (v(i) <= 0)) return i;
     }
     return s;
   }
@@ -169,7 +174,7 @@ export function createWaveform(canvas, { store, getPlayhead, snapEl, infoEl, zoo
 
   canvas.addEventListener('pointerdown', (e) => {
     if (!state.audio) return;
-    canvas.setPointerCapture(e.pointerId);
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* ponteiro sintético ou já liberado */ }
     pointers.set(e.pointerId, localX(e));
     if (pointers.size === 2) {
       const p = pinchInfo();
@@ -232,7 +237,7 @@ export function createWaveform(canvas, { store, getPlayhead, snapEl, infoEl, zoo
   function zoomTo(sample, spp) { view.spp = spp; clampView(); view.offset = sample - (W / 2) * view.spp; clampView(); draw(); }
 
   const off = on((kind) => {
-    if (kind === 'audio') { peaks = buildPeaks(state.audio.channels); proc = null; resize(); zoomAll(); }
+    if (kind === 'audio') { peaks = buildPeaks(state.audio.channels); peaksRev = null; proc = null; resize(); zoomAll(); }
     else draw();
   });
   // Recebe o áudio editado da seleção para desenhar a forma de onda resultante.

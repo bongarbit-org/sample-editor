@@ -33,6 +33,17 @@ describe('velocidade e reverse', () => {
     expect(Array.from(r.channels[0])).toEqual([4, 3, 2, 1]);
     expect(Array.from(audio.channels[0])).toEqual([1, 2, 3, 4]);
   });
+  it('com reverse, início/fim valem na linha do tempo espelhada (recorta o que se vê)', () => {
+    const a = { channels: [new Float32Array([1, 2, 3, 4, 5, 6])], sampleRate: 44100 };
+    const r = renderEdit(a, { ...base, start: 1, end: 3, reverse: true }); // espelhado: [6,5,4,3,2,1] -> fatia [1,3)
+    expect(Array.from(r.channels[0])).toEqual([5, 4]);
+  });
+  it('espelhar início/fim ao alternar o reverse mantém o mesmo trecho (invertido)', () => {
+    const a = { channels: [Float32Array.from({ length: 10 }, (_, i) => i + 1)], sampleRate: 44100 }, N = 10;
+    const fwd = renderEdit(a, { ...base, start: 2, end: 7, reverse: false }).channels[0];
+    const rev = renderEdit(a, { ...base, start: N - 7, end: N - 2, reverse: true }).channels[0];
+    expect(Array.from(rev)).toEqual(Array.from(fwd).reverse());
+  });
   it('+12 semitons dobra a taxa declarada e mantém as amostras', () => {
     const r = renderEdit(audio, { ...base, speedSt: 12 });
     expect(r.sampleRate).toBeCloseTo(88200, 3); expect(r.channels[0].length).toBe(4);
