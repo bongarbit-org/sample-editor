@@ -44,19 +44,19 @@ export function createEditor(root, opts = {}) {
   // ---- waveform ----
   const preview = new Voice();
   // Aplica a edição à imagem da forma de onda (ao soltar slider/marcador) e pré-monta o buffer de áudio.
-  // Descreve o buffer em reprodução para poder continuar do MESMO ponto do áudio original após qualquer edição.
+  // Descreve o buffer em reprodução para continuar do MESMO ponto da seleção após qualquer edição.
+  // O cursor sempre anda da esquerda para a direita; com "Inverter" só a onda desenhada fica espelhada.
   let playMeta = null, playKey = ''; // playKey: edição do buffer em reprodução (evita trocas repetidas)
-  const metaOf = (r) => ({ start: state.edit.start, len: r.channels[0].length, rate: r.sampleRate, reverse: state.edit.reverse });
+  const metaOf = (r) => ({ start: state.edit.start, len: r.channels[0].length, rate: r.sampleRate });
   function liveSwap() {
     if (!preview.playing || ab === 'b' || !playMeta) return; // B (formato exportado) não acompanha edições
     const key = JSON.stringify(state.edit);
     if (key === playKey) return;
     playKey = key;
-    const off = preview.position() * playMeta.rate;
-    const src = playMeta.start + (playMeta.reverse ? playMeta.len - off : off); // amostra do áudio original em reprodução
+    const x = playMeta.start + preview.position() * playMeta.rate; // posição do cursor, em amostras do arquivo
     dirty = true;
-    const r = getRendered(), buf = getBuffer(), e = state.edit;
-    let noff = e.reverse ? e.start + r.channels[0].length - src : src - e.start;
+    const r = getRendered(), buf = getBuffer();
+    let noff = x - state.edit.start;
     if (noff < 0 || noff >= r.channels[0].length) {
       if (!preview.loop) { preview.stop(); ab = null; return; } // saiu da seleção e não há loop
       noff = 0;
@@ -80,8 +80,7 @@ export function createEditor(root, opts = {}) {
     getPlayhead() {
       const pos = preview.position();
       if (pos == null || !rendered) return null;
-      const off = pos * rendered.sampleRate, len = rendered.channels[0].length; // reverse: o cursor anda da direita para a esquerda
-      return state.edit.start + (state.edit.reverse ? len - off : off);
+      return state.edit.start + pos * rendered.sampleRate; // sempre da esquerda para a direita, com ou sem "Inverter"
     },
     snapEl: $('snap'),
     infoEl: $('sel'),
