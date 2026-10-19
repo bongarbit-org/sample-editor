@@ -25,6 +25,29 @@ describe('process', () => {
   });
 });
 
+describe('reverse: o que se vê é o que se recorta (propriedade)', () => {
+  it('para qualquer início/fim, o resultado é a fatia da linha do tempo exibida', () => {
+    const N = 64, src = Float32Array.from({ length: N }, (_, i) => i + 1);
+    const audio = { channels: [src], sampleRate: 44100 };
+    let seed = 7; const rnd = (n) => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed % n; };
+    for (let k = 0; k < 300; k++) {
+      const start = rnd(N - 1), end = start + 1 + rnd(N - start - 1 || 1), reverse = rnd(2) === 1;
+      const e = { start, end: Math.min(end, N), fadeInMs: 0, fadeOutMs: 0, gainDb: 0, normalize: false, speedSt: 0, reverse };
+      const shown = reverse ? Array.from(src).reverse() : Array.from(src); // linha do tempo exibida
+      expect(Array.from(renderEdit(audio, e).channels[0])).toEqual(shown.slice(e.start, e.end));
+    }
+  });
+  it('espelhar início/fim ao alternar o reverse nunca muda o trecho de áudio escolhido', () => {
+    const N = 50, src = Float32Array.from({ length: N }, (_, i) => i + 1), audio = { channels: [src], sampleRate: 44100 };
+    const base = { fadeInMs: 0, fadeOutMs: 0, gainDb: 0, normalize: false, speedSt: 0 };
+    for (let start = 0; start < N; start += 7) for (let end = start + 1; end <= N; end += 5) {
+      const a = Array.from(renderEdit(audio, { ...base, start, end, reverse: false }).channels[0]);
+      const b = Array.from(renderEdit(audio, { ...base, start: N - end, end: N - start, reverse: true }).channels[0]);
+      expect(b).toEqual(a.slice().reverse());
+    }
+  });
+});
+
 describe('velocidade e reverse', () => {
   const audio = { channels: [new Float32Array([1, 2, 3, 4])], sampleRate: 44100 };
   const base = { start: 0, end: 4, fadeInMs: 0, fadeOutMs: 0, gainDb: 0, normalize: false, speedSt: 0, reverse: false };

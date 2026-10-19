@@ -236,9 +236,17 @@ export function createWaveform(canvas, { store, getPlayhead, snapEl, infoEl, zoo
   // enquadra rapidamente um handle (zoom de precisão)
   function zoomTo(sample, spp) { view.spp = spp; clampView(); view.offset = sample - (W / 2) * view.spp; clampView(); draw(); }
 
+  // Ao ligar/desligar o reverse a linha do tempo é espelhada: espelha também a janela visível, para a seleção
+  // continuar na tela (senão, com zoom, o trecho escolhido iria parar fora da área visível).
+  let lastRev = false;
   const off = on((kind) => {
-    if (kind === 'audio') { peaks = buildPeaks(state.audio.channels); peaksRev = null; proc = null; resize(); zoomAll(); }
-    else draw();
+    if (kind === 'audio') { peaks = buildPeaks(state.audio.channels); peaksRev = null; proc = null; lastRev = rev(); resize(); zoomAll(); return; }
+    if (rev() !== lastRev) {
+      lastRev = rev();
+      view.offset = len() - (view.offset + W * view.spp);
+      clampView();
+    }
+    draw();
   });
   // Recebe o áudio editado da seleção para desenhar a forma de onda resultante.
   function setProcessed(rendered, start) {
