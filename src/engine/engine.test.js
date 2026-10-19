@@ -4,6 +4,7 @@ import { encodeWav, quantize, quantizeToFloat } from './wav.js';
 import { createStore, defaultEdit } from './store.js';
 import { createHistory } from './history.js';
 import { PROFILES, resolveProfile, estimate } from './profile.js';
+import { parseTime, boundFromTime } from './time.js';
 
 const ones = (n) => [new Float32Array(n).fill(1)];
 
@@ -207,5 +208,23 @@ describe('perfil M16', () => {
   it('taxa diferente de 44,1 kHz gera aviso informativo sem mudar o estado', () => {
     const e = estimate(m16, { frames: 22050, rate: 22050, channels: 1, bits: 16 });
     expect(e.status).toBe('ok'); expect(e.issues.length).toBe(1);
+  });
+});
+
+describe('tempo digitado', () => {
+  it('aceita vírgula, ponto, sufixo s e m:ss,ms', () => {
+    expect(parseTime('1,5')).toBe(1.5); expect(parseTime('1.5')).toBe(1.5); expect(parseTime(' 2 s ')).toBe(2);
+    expect(parseTime('0:01,5')).toBe(1.5); expect(parseTime('2:03.25')).toBe(123.25); expect(parseTime(',5')).toBe(0.5); expect(parseTime('3,')).toBe(3);
+  });
+  it('rejeita texto inválido e vazio', () => {
+    for (const bad of ['', '  ', 'abc', '1,2,3', '--1', '1:', ':5', '1e3']) expect(parseTime(bad)).toBeNaN();
+  });
+  it('converte em amostras respeitando início < fim e os limites do arquivo', () => {
+    const edit = { start: 1000, end: 5000 };
+    expect(boundFromTime('start', 0.01, 44100, edit, 10000)).toBe(441);
+    expect(boundFromTime('start', 1, 44100, edit, 10000)).toBe(4984); // limitado a fim - 16
+    expect(boundFromTime('start', -2, 44100, edit, 10000)).toBe(0);
+    expect(boundFromTime('end', 0, 44100, edit, 10000)).toBe(1016); // limitado a início + 16
+    expect(boundFromTime('end', 99, 44100, edit, 10000)).toBe(10000);
   });
 });

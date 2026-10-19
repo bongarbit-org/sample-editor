@@ -1,6 +1,7 @@
 // API pública do motor de áudio (sem DOM). O ffmpeg.wasm é carregado sob demanda por `decodeFile`.
 export { defaultEdit, createStore } from './store.js';
 export { createHistory } from './history.js';
+export { parseTime, boundFromTime } from './time.js';
 export { PROFILES, resolveProfile, estimate } from './profile.js';
 export {
   dbToLin, linToDb, sliceChannels, peak, applyGain, normalize, applyFades,

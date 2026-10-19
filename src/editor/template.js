@@ -3,8 +3,11 @@ export const EDITOR_TEMPLATE = `
 <!-- Forma de onda + reprodução + edição num só bloco, para caber numa tela de celular -->
 <section class="panel stage" aria-label="Forma de onda, reprodução e edição">
   <canvas id="wave"></canvas>
-  <p id="sel" class="readout"></p>
-  <p class="readout"><span id="zoomv"></span><span id="outdur"></span></p>
+  <div class="timebox">
+    <label class="tfield">Início <input id="tstart" type="text" inputmode="decimal" autocomplete="off" aria-label="Início em segundos" /><span>s</span></label>
+    <label class="tfield">Fim <input id="tend" type="text" inputmode="decimal" autocomplete="off" aria-label="Fim em segundos" /><span>s</span></label>
+  </div>
+  <p class="readout"><span id="sel"></span><span id="zoomv"></span><span id="outdur"></span></p>
   <div class="row tight zoomrow">
     <button id="zin" class="btn sm">Zoom +</button>
     <button id="zout" class="btn sm">Zoom -</button>

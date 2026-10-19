@@ -1,6 +1,7 @@
 import { decodeFile } from '../engine/decode.js';
 import { createStore } from '../engine/store.js';
 import { createHistory } from '../engine/history.js';
+import { parseTime, boundFromTime } from '../engine/time.js';
 import { PROFILES, resolveProfile, estimate } from '../engine/profile.js';
 import { renderEdit, peak, linToDb, toMono, toStereo, speedRatio } from '../engine/process.js';
 import { encodeWav, quantizeToFloat } from '../engine/wav.js';
@@ -258,6 +259,34 @@ export function createEditor(root, opts = {}) {
   $('slots').addEventListener('input', updateProfileInfo);
   for (const id of ['chan', 'rate', 'bits']) $(id).addEventListener('change', updateProfileInfo);
 
+  // ---- início e fim digitados (segundos, na linha do tempo exibida) ----
+  const fmtT = (smp) => nf(smp / state.audio.sampleRate, 4);
+  const TIME_FIELDS = [['tstart', 'start'], ['tend', 'end']];
+  function updateTimeInputs() { // não sobrescreve o campo enquanto o usuário digita
+    if (!state.audio) return;
+    for (const [id, key] of TIME_FIELDS) if (document.activeElement !== $(id)) $(id).value = fmtT(state.edit[key]);
+  }
+  function applyTime(id, key) {
+    const el = $(id), t = parseTime(el.value);
+    if (!state.audio || !Number.isFinite(t)) { updateTimeInputs(); el.value = state.audio ? fmtT(state.edit[key]) : ''; return; }
+    setEdit({ [key]: boundFromTime(key, t, state.audio.sampleRate, state.edit, state.audio.channels[0].length) });
+    el.value = fmtT(state.edit[key]);
+    commit();
+  }
+  for (const [id, key] of TIME_FIELDS) {
+    const el = $(id);
+    el.addEventListener('change', () => applyTime(id, key));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); el.blur(); return; }
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      e.preventDefault(); // ↑/↓ ajustam 1 ms; Shift 10 ms; Alt 100 ms
+      const step = (e.altKey ? 0.1 : e.shiftKey ? 0.01 : 0.001) * (e.key === 'ArrowUp' ? 1 : -1);
+      const cur = parseTime(el.value);
+      el.value = nf((Number.isFinite(cur) ? cur : state.edit[key] / state.audio.sampleRate) + step, 4);
+      applyTime(id, key);
+    });
+  }
+
   // ---- comparar: editado (A) x formato exportado (B), tocando da mesma posição ----
   let ab = null;
   const fmtHz = (hz) => `${nf(hz / 1000, hz % 1000 ? 3 : 1).replace(/,?0+$/, '')} kHz`;
@@ -325,9 +354,10 @@ export function createEditor(root, opts = {}) {
   // ---- carregar arquivo ----
   on((kind) => {
     dirty = true;
+    updateTimeInputs();
     if (kind !== 'audio') return;
     root.hidden = false;
-    syncControls();
+    syncControls(); updateTimeInputs();
     $('fname').value = state.name.replace(/\.[^.]+$/, '');
     history.reset(state.edit);
     preview.stop();

@@ -143,7 +143,7 @@ export function createWaveform(canvas, { store, getPlayhead, snapEl, infoEl, zoo
       const sr = state.audio.sampleRate;
       const f = (s) => (s / sr).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' s';
       const z = view.spp.toLocaleString('pt-BR', { maximumFractionDigits: view.spp < 10 ? 2 : 0 });
-      infoEl.innerHTML = `<span>Início <b>${f(start)}</b></span><span>Fim <b>${f(end)}</b></span><span>Duração <b>${f(end - start)}</b></span>`;
+      infoEl.innerHTML = `Duração <b>${f(end - start)}</b>`;
       if (zoomEl) zoomEl.textContent = `Zoom ${z} amostras/px`;
     }
   }
