@@ -41,7 +41,6 @@ export const EDITOR_TEMPLATE = `
 
 <section class="panel export-panel">
   <h2 class="panel-title">Exportar WAV</h2>
-  <div class="field"><label for="profile">Perfil</label><select id="profile"></select></div>
   <div class="field"><label for="chan">Canais</label><select id="chan"><option value="mono" selected>Mono</option><option value="stereo">Estéreo</option></select></div>
   <div class="field"><label for="rate">Taxa de amostragem</label><select id="rate">
     <option value="8000">8 kHz</option><option value="11025">11,025 kHz</option><option value="16000">16 kHz</option><option value="22050">22,05 kHz</option>
@@ -63,7 +62,8 @@ export const EDITOR_TEMPLATE = `
     <button id="download" class="btn">Baixar</button>
     <button id="saveas" class="btn" hidden>Salvar em…</button>
   </div>
-  <div id="profileBox" class="row tight profile-box" hidden><span id="profileTag" class="tag"></span><span id="profileInfo" class="note"></span></div>
+  <div class="field"><label for="slots">Samples na memória ao mesmo tempo</label><input id="slots" type="number" inputmode="numeric" min="1" max="16" step="1" value="3" /></div>
+  <div id="profileBox" class="profile-box" hidden><span id="profileTag" class="tag"></span><p id="profileInfo" class="note"></p></div>
   <p id="profileNotes" class="note"></p>
   <p id="exportMsg" class="note"></p>
 </section>

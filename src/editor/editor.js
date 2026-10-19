@@ -12,7 +12,7 @@ import { EDITOR_TEMPLATE } from './template.js';
 /**
  * Editor de áudio reutilizável. Monta a interface dentro de `root` e fica oculto até haver áudio.
  * opts.showExport (padrão true): mostra o painel de exportação WAV.
- * opts.profile: id ou objeto de perfil de exportação (ex.: 'm16-sampler'); trava o seletor, salvo lockProfile:false.
+ * opts.profile: id ou objeto de perfil de exportação; o padrão é o M16 / ESP32-S3 e não há seletor na interface.
  * Retorna: { store, loadFile(file, onStatus), loadAudio(audio, name), getRendered(), exportWav(), on(fn), destroy() }.
  */
 export function createEditor(root, opts = {}) {
@@ -217,49 +217,46 @@ export function createEditor(root, opts = {}) {
   syncDither();
   for (const id of ['chan', 'rate', 'bits', 'dither']) $(id).addEventListener('change', scheduleExport);
 
-  // ---- perfil de exportação: restringe o formato e avisa sobre memória do instrumento ----
-  const fullOptions = {}; // opções originais de cada select, para restaurar ao voltar para "Livre"
-  for (const id of ['chan', 'rate', 'bits']) fullOptions[id] = [...$(id).options].map((o) => o.cloneNode(true));
-  $('profile').append(new Option('Livre (sem limites)', ''));
-  for (const p of Object.values(PROFILES)) $('profile').append(new Option(p.label, p.id));
-  const currentProfile = () => resolveProfile($('profile').value);
-  const fmtBytes = (b) => (b >= MiB ? `${nf(b / MiB, 2)} MiB` : `${nf(b / 1024, 1)} KiB`);
+  // ---- limites do M16 / ESP32-S3: sempre ativos (sem seletor de perfil) ----
+  // O formato fica restrito ao que o instrumento aceita e a análise de memória considera que este sample
+  // divide a PSRAM com outros (campo "Samples na memória ao mesmo tempo").
+  const profile = resolveProfile(opts.profile) || PROFILES['m16-sampler'];
   const MiB = 1024 * 1024;
-  function applyProfile(resetFormat) {
-    const p = currentProfile();
-    const allowed = { chan: p && p.channels.map(String), rate: p && p.rates.map(String), bits: p && p.bits.map(String) };
+  const fmtBytes = (b) => (b >= MiB ? `${nf(b / MiB, 2)} MiB` : `${nf(b / 1024, 1)} KiB`);
+  const int = (v) => Math.round(v).toLocaleString('pt-BR');
+  (function restrictFormat() {
+    const allowed = { chan: profile.channels.map(String), rate: profile.rates.map(String), bits: profile.bits.map(String) };
     for (const id of ['chan', 'rate', 'bits']) {
-      const sel = $(id), keep = sel.value;
-      sel.replaceChildren(...fullOptions[id].filter((o) => !allowed[id] || allowed[id].includes(o.value)).map((o) => o.cloneNode(true)));
-      sel.value = [...sel.options].some((o) => o.value === keep) ? keep : sel.options[0].value;
+      const sel = $(id);
+      [...sel.options].forEach((o) => { if (!allowed[id].includes(o.value)) o.remove(); });
     }
-    if (p && resetFormat) { $('chan').value = p.preferredChannels; $('rate').value = String(p.preferredRate); $('bits').value = String(p.preferredBits); }
-    syncDither(); scheduleExport(); updateProfileInfo();
-  }
+    $('chan').value = profile.preferredChannels; $('rate').value = String(profile.preferredRate); $('bits').value = String(profile.preferredBits);
+    $('slots').value = String(profile.residentSlots);
+    syncDither();
+  })();
+  const slotsValue = () => Math.max(1, Math.min(16, Math.round(Number($('slots').value)) || profile.residentSlots));
   function profileEstimate() {
-    const p = currentProfile();
-    if (!p || !rendered) return null;
+    if (!rendered) return null;
     const rate = Number($('rate').value), channels = $('chan').value === 'mono' ? 1 : 2;
     const frames = Math.round((rendered.channels[0].length / rendered.sampleRate) * rate);
-    return { p, e: estimate(p, { frames, rate, channels, bits: Number($('bits').value) }) };
+    return { p: profile, e: estimate(profile, { frames, rate, channels, bits: Number($('bits').value), slots: slotsValue() }) };
   }
   function updateProfileInfo() {
     const r = profileEstimate(), box = $('profileBox');
-    box.hidden = !r; $('profileNotes').textContent = '';
+    box.hidden = !r;
     if (!r) return;
     const { e } = r;
     $('profileTag').textContent = e.status === 'error' ? 'Excede o limite' : e.status === 'warn' ? 'Perto do limite' : 'Dentro do limite';
     $('profileTag').className = 'tag' + (e.status === 'error' ? ' error' : e.status === 'warn' ? ' warn' : '');
-    $('profileInfo').textContent = `RAM ${fmtBytes(e.ramBytes)} de ${fmtBytes(e.budgetBytes)} por sample (${nf(e.fraction * 100, 1)}%) · arquivo ${fmtBytes(e.fileBytes)} · máx. ${nf(e.maxSeconds, 1)} s neste formato`;
-    $('profileNotes').textContent = e.issues.join(' ');
+    $('profileInfo').innerHTML = [
+      `Este sample: RAM ${fmtBytes(e.ramBytes)} (${nf(e.fractionOfTotal * 100, 1)}% da PSRAM utilizável de ${fmtBytes(e.totalBudgetBytes)}) · arquivo ${fmtBytes(e.fileBytes)}`,
+      `Com ${e.slots} samples na memória: limite de ${fmtBytes(e.budgetBytes)} por sample (usa ${nf(e.fraction * 100, 1)}%) · máx. ${nf(e.maxSeconds, 1)} s neste formato`,
+      `Cabem ~${int(e.fitRam)} samples assim na PSRAM e ~${int(e.fitFlash)} na flash interna (${fmtBytes(profile.storageBytes)})`,
+      ...e.issues,
+    ].map((t) => `<span>${t}</span>`).join('');
   }
-  $('profile').addEventListener('change', () => applyProfile(true));
+  $('slots').addEventListener('input', updateProfileInfo);
   for (const id of ['chan', 'rate', 'bits']) $(id).addEventListener('change', updateProfileInfo);
-  if (opts.profile) {
-    $('profile').value = resolveProfile(opts.profile).id;
-    if (opts.lockProfile !== false) $('profile').disabled = true;
-    applyProfile(true);
-  }
 
   // ---- comparar: editado (A) x formato exportado (B), tocando da mesma posição ----
   let ab = null;
@@ -348,7 +345,7 @@ export function createEditor(root, opts = {}) {
     loadFile,
     loadAudio: (audio, name) => setAudio(audio, name),
     getRendered,
-    getProfile: currentProfile,
+    getProfile: () => profile,
     getProfileEstimate: () => { const r = profileEstimate(); return r && r.e; },
     undo, redo,
     get history() { return { canUndo: history.canUndo, canRedo: history.canRedo, size: history.size }; },

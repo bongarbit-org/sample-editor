@@ -140,6 +140,28 @@ describe('histórico', () => {
   });
 });
 
+describe('análise com vários samples na memória', () => {
+  const m16 = PROFILES['m16-sampler'];
+  const one = { frames: 44100, rate: 44100, channels: 1, bits: 16 };
+  it('o orçamento por sample divide a PSRAM utilizável pelos samples simultâneos', () => {
+    const a = estimate(m16, { ...one, slots: 3 }), b = estimate(m16, { ...one, slots: 9 });
+    expect(a.totalBudgetBytes).toBe(b.totalBudgetBytes);
+    expect(b.budgetBytes).toBeCloseTo(a.budgetBytes / 3, -2);
+    expect(a.slots).toBe(3); expect(estimate(m16, one).slots).toBe(3);
+  });
+  it('9 samples simultâneos baixam o limite para ~9,5 s e fazem 15 s excederem', () => {
+    const e = estimate(m16, { ...one, slots: 9 });
+    expect(e.maxSeconds).toBeCloseTo(9.5, 1); expect(e.status).toBe('ok');
+    expect(estimate(m16, { ...one, frames: 44100 * 15, slots: 9 }).status).toBe('error');
+    expect(estimate(m16, { ...one, frames: 44100 * 15, slots: 3 }).status).toBe('ok');
+  });
+  it('informa a fração do total e quantos samples assim cabem na PSRAM e na flash', () => {
+    const e = estimate(m16, one);
+    expect(e.fractionOfTotal).toBeCloseTo(88200 / 7549747, 6);
+    expect(e.fitRam).toBe(85); expect(e.fitFlash).toBe(40);
+  });
+});
+
 describe('perfil M16', () => {
   const m16 = PROFILES['m16-sampler'];
   it('resolve por id, objeto ou nulo', () => {

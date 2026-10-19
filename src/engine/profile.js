@@ -20,23 +20,28 @@ export const PROFILES = {
     ramBytesPerSample: 2, // int16 na RAM, qualquer que seja a resolução do arquivo
     memoryBytes: 8 * MiB, // PSRAM nominal
     usableFraction: 0.9, // a M16 só usa até 90% da PSRAM livre
-    residentSlots: 3, // samples na RAM ao mesmo tempo (uma página de 3 botões)
+    residentSlots: 3, // padrão: samples na RAM ao mesmo tempo (uma página de 3 botões); o editor deixa ajustar
+    storageBytes: 3538944, // partição de dados (spiffs) de default_16MB.csv; hipótese: o firmware pode usar SD ou outra partição
     warnFraction: 0.75,
   },
 };
 
 export const resolveProfile = (p) => (typeof p === 'string' ? PROFILES[p] || null : p || null);
 
-// Estima o custo de um sample exportado e classifica contra o orçamento do perfil.
-export function estimate(profile, { frames, rate, channels, bits }) {
+// Estima o custo de um sample exportado e o classifica contra o orçamento do perfil.
+// Esse sample NÃO é o único no instrumento: o orçamento por sample divide a PSRAM utilizável entre `slots`
+// samples residentes ao mesmo tempo (padrão do perfil; ajustável). Também informa quantos samples assim cabem.
+export function estimate(profile, { frames, rate, channels, bits, slots = profile.residentSlots }) {
   const ramBytes = frames * channels * profile.ramBytesPerSample;
-  const budgetBytes = Math.floor((profile.memoryBytes * profile.usableFraction) / profile.residentSlots);
+  const totalBudgetBytes = Math.floor(profile.memoryBytes * profile.usableFraction);
+  const budgetBytes = Math.floor(totalBudgetBytes / slots);
   const fraction = ramBytes / budgetBytes;
+  const fileBytes = 44 + Math.ceil((frames * channels * bits) / 8);
   const issues = [];
   let status = 'ok';
   if (fraction > 1) {
     status = 'error';
-    issues.push('Excede o limite por sample: a M16 trunca o arquivo em silêncio.');
+    issues.push(`Excede o limite por sample com ${slots} samples na memória: a M16 trunca o arquivo em silêncio.`);
   } else if (fraction > profile.warnFraction) {
     status = 'warn';
     issues.push('Perto do limite de memória por sample.');
@@ -45,8 +50,10 @@ export function estimate(profile, { frames, rate, channels, bits }) {
     issues.push('A M16 toca em 44,1 kHz sem interpolação: outras taxas economizam memória, mas soam mais ásperas.');
   }
   return {
-    ramBytes, budgetBytes, fraction, status, issues,
-    fileBytes: 44 + Math.ceil((frames * channels * bits) / 8),
+    ramBytes, budgetBytes, totalBudgetBytes, fraction, status, issues, fileBytes, slots,
+    fractionOfTotal: ramBytes / totalBudgetBytes,
     maxSeconds: budgetBytes / (rate * channels * profile.ramBytesPerSample),
+    fitRam: ramBytes > 0 ? Math.floor(totalBudgetBytes / ramBytes) : 0, // samples deste tamanho que cabem na PSRAM
+    fitFlash: profile.storageBytes && fileBytes > 0 ? Math.floor(profile.storageBytes / fileBytes) : 0, // ... na flash interna
   };
 }

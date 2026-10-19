@@ -75,7 +75,7 @@ body {
 .field { display: flex; flex-direction: column; gap: var(--space-2); }
 .field label { display: flex; justify-content: space-between; align-items: baseline; color: var(--text-strong); }
 .field output { font-weight: 400; letter-spacing: .01em; text-transform: none; font-size: var(--fs-small); color: var(--text-body); }
-.field select, .field input[type=text] {
+.field select, .field input[type=text], .field input[type=number] {
   width: 100%; padding: 11px 13px; font: inherit; font-size: var(--fs-body); color: var(--text-strong);
   background: var(--papel-sombra); border: 1px solid var(--border-rule); border-radius: 0; appearance: none; -webkit-appearance: none;
 }
@@ -137,5 +137,6 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 26px; }
 .chk { white-space: nowrap; }
 .btn.on { background: var(--preto-grafite); color: var(--papel); } /* selecionado: tinta cheia */
 .tag { white-space: nowrap; }
-.profile-box { align-items: flex-start; flex-wrap: wrap; }
-.profile-box .note { flex: 1; min-width: 0; }
+.profile-box { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.profile-box[hidden] { display: none; }
+.profile-box .note { display: flex; flex-direction: column; gap: 2px; }
